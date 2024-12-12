@@ -91,6 +91,19 @@ def summarize_content(content, api_key):
 
 # Streamlit UI
 def main():
+
+    # Display author information in the sidebar
+    st.sidebar.title("About the Author")
+    st.sidebar.markdown("""
+        **Tanvir Anzum**  
+        *Author, Data Scientist, and Machine Learning Enthusiast*  
+
+        With a passion for leveraging technology to solve real-world problems, I specialize in building recommendation systems, data analytics, and machine learning models. Currently, I work on innovative projects in the analytics &  recommendation space.
+
+        ---
+
+        Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/aanzum/).
+        """)
     st.title("News Summarizer")
     st.write(
         "Select a news source, enter a URL, and I'll fetch and summarize its content "
