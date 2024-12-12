@@ -35,8 +35,6 @@ def extract_content_from_url(url, target_classes):
     except Exception as e:
         return None, f"Error fetching content: {e}"
 
-
-# Function to read the API key from the config file
 # Function to read the API key from Streamlit secrets
 def read_api_key():
     try:
@@ -102,7 +100,7 @@ def main():
     # Dropdown menu for selecting news source
     source = st.selectbox(
         "Select the news source:",
-        ["Daily Prothom Alo", "The Daily Star", "The Daily Ittefaq", "The Business Standard", "Daily Manab Zamin",
+        ["Daily Prothom Alo", "The Daily Star", "DW", "The Business Standard", "Daily Manab Zamin",
          "Other"]
     )
 
@@ -110,7 +108,7 @@ def main():
     target_classes_map = {
         "Daily Prothom Alo": ["story-element story-element-text"],
         "The Daily Star": ["pb-20 clearfix"],
-        "The Daily Ittefaq": ["viewport jw_article_body"],
+        "DW": ["cc0m0op s1ebneao rich-text t1it8i9i r1wgtjne wgx1hx2 b1ho1h07"],
         "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
         "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"]
     }
