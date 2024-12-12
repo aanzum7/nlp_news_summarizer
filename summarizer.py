@@ -11,10 +11,10 @@ def extract_content_from_url(url, target_classes):
         # Fetch the webpage
         response = requests.get(url)
         response.raise_for_status()  # Raise an error for bad HTTP status codes
-        
+
         # Parse the HTML content
         soup = BeautifulSoup(response.text, 'html.parser')
-        
+
         paragraphs = []
         # Iterate through all target classes
         for target_class in target_classes:
@@ -23,13 +23,13 @@ def extract_content_from_url(url, target_classes):
                 for div in soup.find_all('div', class_=target_class)
                 for p in div.find_all('p')
             )
-        
+
         # Combine paragraphs into a single string
         combined_paragraph = "\n".join(paragraphs)
         if not combined_paragraph or len(combined_paragraph.split()) < 50:  # Check for valid content
             return None, "The extracted content is too short or invalid. Please check the URL or the class configuration."
         return combined_paragraph, None
-    
+
     except requests.exceptions.RequestException as e:
         return None, f"Network error: {e}"
     except Exception as e:
@@ -47,26 +47,26 @@ def summarize_content(content, api_key):
     try:
         # Detect the language of the input content
         language = langdetect.detect(content)
-        
+
         # Configure Generative AI with the API key
         genai.configure(api_key=api_key)
-        
+
         # Set generation parameters
         generation_config = {
             "temperature": 0.5,  # Lower temperature for factual consistency
             "top_p": 0.9,
             "max_output_tokens": 512,  # Enough space for detailed content
         }
-        
+
         # Create the model
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
             generation_config=generation_config
         )
-        
+
         # Start a new chat session for each request
         chat_session = model.start_chat()  # Ensure a new chat session is started each time
-        
+
         # Enhanced prompt for preserving original language and generating both summary and title
         prompt = (
             f"You are a journalist tasked with summarizing news in {language}. "
@@ -75,22 +75,39 @@ def summarize_content(content, api_key):
             "Also, provide a headline in the same language that best emphasizes the core message of the news:\n\n"
             f"{content}"
         )
-        
+
         # Send the prompt to the model
         response = chat_session.send_message(prompt)
-        
+
         if response and response.text:
             # Return both summary and headline
             return response.text.strip(), None
         else:
             return None, "No response generated."
-    
+
     except Exception as e:
         return None, f"Error summarizing content: {e}"
 
 
 # Streamlit UI
 def main():
+
+    # Display the logo image as a cover photo (banner-style)
+    st.markdown(
+        """
+        <style>
+        .cover-photo {
+            width: 100%;
+            height: 300px;  /* Adjust the height as needed */
+            object-fit: cover;  /* Ensures the image covers the area without distortion */
+        }
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+    # Display the image using st.image with use_container_width
+    st.image("assets/bg.jpeg", use_container_width=True,
+             caption="InsightInMinutes")  # Adjust width and height as needed
 
     # Display author information in the sidebar
     st.sidebar.title("About the Author")
@@ -104,10 +121,16 @@ def main():
 
         Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/aanzum/).
         """)
-    st.title("News Summarizer")
+
+    # Title for the app
+    st.title("InsightInMinutes: News Summarizer with AI")
+
+    # Description
     st.write(
-        "Select a news source, enter a URL, and I'll fetch and summarize its content "
-        "while keeping the language and tone consistent with the original."
+        """
+        **Welcome to InsightInMinutes!**  
+        Select a news source, input a URL, and I'll fetch and summarize its content using advanced AI, keeping the tone and language consistent with the original.
+        """
     )
 
     # Dropdown menu for selecting news source
