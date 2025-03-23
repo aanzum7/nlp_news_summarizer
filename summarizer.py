@@ -60,7 +60,7 @@ def summarize_content(content, api_key):
         generation_config = {
             "temperature": 0.5,  # Lower temperature for factual consistency
             "top_p": 0.9,
-            "max_output_tokens": 512,  # Enough space for detailed content
+            "max_output_tokens": 1200,  # Enough space for detailed content
         }
 
         # Create the model
