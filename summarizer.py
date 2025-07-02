@@ -106,7 +106,7 @@ def url_page(api_key):
         target_classes_map = {
             "Daily Prothom Alo": ["story-element story-element-text"],
             "The Daily Star": ["pb-20 clearfix"],
-            "DW": ["cc0m0op s1ebneao rich-text t1it8i9i r1wgtjne wgx1hx2 b1ho1h07"],
+            "DW": ["c17j8gzx rc0m0op r1ebneao s198y7xq rich-text li5mn0y r16w0xvi w1fzgn0z blt0baw"],
             "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
             "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"],
         }
