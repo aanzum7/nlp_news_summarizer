@@ -44,19 +44,19 @@ def extract_content_from_url(url, target_classes):
 # Summarizer
 # ---------------------------
 @lru_cache(maxsize=10)
-def summarize_content(content, api_key, word_limit):
+def summarize_content(content, api_key, min_limit, max_limit):
     try:
         lang = langdetect.detect(content)
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-2.0-flash",
             generation_config={"temperature": 0.4, "top_p": 0.9, "max_output_tokens": 1024},
         )
         chat = model.start_chat()
 
         prompt = (
             f"You are a journalist summarizing content in {lang}. "
-            f"Generate a headline and a summary within {word_limit} words, "
+            f"Generate a headline and a summary within {min_limit} to {max_limit} words, "
             "preserving the language and tone.\n\n"
             f"Content:\n{content}"
         )
@@ -116,7 +116,10 @@ def url_page(api_key):
         if custom_class:
             target_classes = [custom_class]
 
-    word_limit = st.slider("Set Summary Length (words):", 70, 250, 150)
+    min_limit, max_limit = st.slider(
+        "Set Summary Length Range (words):",
+        50, 250, (70, 150)
+    )
 
     if "generated_url" not in st.session_state:
         st.session_state.generated_url = False
@@ -129,7 +132,7 @@ def url_page(api_key):
                     if error:
                         st.error(error)
                     elif content:
-                        summary, error = summarize_content(content, api_key, word_limit)
+                        summary, error = summarize_content(content, api_key, min_limit, max_limit)
                         if error:
                             st.error(error)
                         else:
@@ -155,7 +158,7 @@ def url_page(api_key):
                     if error:
                         st.error(error)
                     elif content:
-                        summary, error = summarize_content(content, api_key, word_limit)
+                        summary, error = summarize_content(content, api_key, min_limit, max_limit)
                         if error:
                             st.error(error)
                         else:
@@ -175,7 +178,11 @@ def text_page(api_key):
     st.title("📝 Text Summarizer")
 
     input_text = st.text_area("Paste Your Text Here:", height=250)
-    word_limit = st.slider("Set Summary Length (words):", 70, 250, 150)
+
+    min_limit, max_limit = st.slider(
+        "Set Summary Length Range (words):",
+        50, 250, (70, 150)
+    )
 
     if "generated_text" not in st.session_state:
         st.session_state.generated_text = False
@@ -184,7 +191,7 @@ def text_page(api_key):
         if st.button("🚀 Generate Summary", use_container_width=True):
             if input_text.strip():
                 with st.spinner("Generating..."):
-                    summary, error = summarize_content(input_text.strip(), api_key, word_limit)
+                    summary, error = summarize_content(input_text.strip(), api_key, min_limit, max_limit)
                     if error:
                         st.error(error)
                     else:
@@ -205,7 +212,7 @@ def text_page(api_key):
             if st.button("♻️ Regenerate Summary", use_container_width=True):
                 with st.spinner("Regenerating..."):
                     summary, error = summarize_content(
-                        input_text.strip(), api_key, word_limit
+                        input_text.strip(), api_key, min_limit, max_limit
                     )
                     if error:
                         st.error(error)
