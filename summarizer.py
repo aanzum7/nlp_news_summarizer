@@ -230,18 +230,49 @@ def text_page(api_key):
 def main():
     st.set_page_config(page_title="InsightInMinutes", layout="wide")
 
+    # ---------------------------
+    # Sidebar
+    # ---------------------------
     with st.sidebar:
         st.title("📰 InsightInMinutes")
-        st.markdown("""
-        **AI-powered summarizer**  
-        Summarize from URL or Text with custom or predefined sources.  
-        ---
-        👨‍💻 **Tanvir Anzum**  
-        *AI & Data Researcher*  
-        [🔗 LinkedIn](https://www.linkedin.com/in/aanzum/)
-        """)
+        st.caption("⚡ AI-powered News Summarizer")
 
-        page = st.radio(
+        st.markdown("""
+            <div style='font-size: 14px; font-weight: normal;'>
+            Summarize from <strong>URL</strong> or <strong>custom text</strong> using predefined or user-defined sources.  
+            Built for <strong>speed, clarity, and insight</strong>.
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        st.title("👨‍💻 About the Author")
+        st.caption("Tanvir Anzum – AI & Data Researcher")
+
+        st.markdown("""
+            <div style='font-size: 14px; font-weight: normal;'>
+            Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style='font-size: 14px; font-weight: normal;'>
+            <br>
+            <a href="https://www.linkedin.com/in/aanzum" target="_blank">
+                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="16" style="vertical-align:middle; margin-right:6px;">
+                <strong>LinkedIn</strong>
+            </a>
+            &nbsp;&nbsp;
+            <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="16" style="vertical-align:middle; margin-right:6px;">
+                <strong>Research</strong>
+            </a>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        page = st.radio(            
             "Navigate to:",
             ["🌐 URL Summarizer", "📝 Text Summarizer"]
         )
