@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import google.generativeai as genai
 import langdetect
 from functools import lru_cache
+import re
 
 
 # ---------------------------
@@ -83,6 +84,23 @@ def reset_output(page_type):
 
 
 # ---------------------------
+# Helper: Detect Source from URL
+# ---------------------------
+def detect_source_from_url(url):
+    patterns = {
+        "Daily Prothom Alo": r"prothomalo\.com",
+        "The Daily Star": r"thedailystar\.net",
+        "DW": r"dw\.com",
+        "The Business Standard": r"tbsnews\.net",
+        "Daily Manab Zamin": r"mzamin\.com",
+    }
+    for name, pattern in patterns.items():
+        if re.search(pattern, url or ""):
+            return name
+    return "Other"
+
+
+# ---------------------------
 # URL Summarizer (Page 1)
 # ---------------------------
 def url_page(api_key):
@@ -90,31 +108,34 @@ def url_page(api_key):
 
     url = st.text_input("Enter News URL:")
 
-    source_mode = st.radio(
-        "Source Type",
-        ["Predefined Source", "Custom CSS Class"],
-        horizontal=True
-    )
+    # --- Reset output if URL is changed or cleared ---
+    if "last_url" not in st.session_state:
+        st.session_state.last_url = ""
+    if url != st.session_state.last_url:
+        st.session_state.last_url = url
+        st.session_state.generated_url = False
+        st.session_state.last_summary = None
 
-    target_classes = []
-    if source_mode == "Predefined Source":
-        source = st.radio(
-            "Choose Source",
-            ["Daily Prothom Alo", "The Daily Star", "DW", "The Business Standard", "Daily Manab Zamin"],
-            horizontal=True
-        )
-        target_classes_map = {
-            "Daily Prothom Alo": ["story-element story-element-text"],
-            "The Daily Star": ["pb-20 clearfix"],
-            "DW": ["cc0m0op s1ebneao rich-text t1it8i9i r1wgtjne wgx1hx2 b1ho1h07"],
-            "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
-            "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"],
-        }
+    detected_source = detect_source_from_url(url) if url else None
+
+    target_classes_map = {
+        "Daily Prothom Alo": ["story-element story-element-text"],
+        "The Daily Star": ["pb-20 clearfix"],
+        "DW": ["c17j8gzx rc0m0op r1ebneao s198y7xq rich-text li5mn0y r16w0xvi w1fzgn0z blt0baw"],
+        "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
+        "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"],
+    }
+
+    if detected_source and detected_source != "Other":
+        source = detected_source
+        st.info(f"Detected Source: **{source}**")
         target_classes = target_classes_map.get(source, [])
+        custom_class = ""
     else:
+        source = "Other"
+        st.info("Source not recognized. Please provide the CSS class for the article content.")
         custom_class = st.text_input("Enter CSS Class for Article Content:")
-        if custom_class:
-            target_classes = [custom_class]
+        target_classes = [custom_class] if custom_class else []
 
     min_limit, max_limit = st.slider(
         "Set Summary Length Range (words):",
@@ -126,7 +147,7 @@ def url_page(api_key):
 
     if not st.session_state.generated_url:
         if st.button("🚀 Generate Summary", use_container_width=True):
-            if url and target_classes:
+            if url and target_classes and (source != "Other" or custom_class):
                 with st.spinner("Fetching and Summarizing..."):
                     content, error = extract_content_from_url(url, target_classes)
                     if error:
@@ -230,18 +251,49 @@ def text_page(api_key):
 def main():
     st.set_page_config(page_title="InsightInMinutes", layout="wide")
 
+    # ---------------------------
+    # Sidebar
+    # ---------------------------
     with st.sidebar:
         st.title("📰 InsightInMinutes")
-        st.markdown("""
-        **AI-powered summarizer**  
-        Summarize from URL or Text with custom or predefined sources.  
-        ---
-        👨‍💻 **Tanvir Anzum**  
-        *AI & Data Researcher*  
-        [🔗 LinkedIn](https://www.linkedin.com/in/aanzum/)
-        """)
+        st.caption("⚡ AI-powered News Summarizer")
 
-        page = st.radio(
+        st.markdown("""
+            <div style='font-size: 14px; font-weight: normal;'>
+            Summarize from <strong>URL</strong> or <strong>custom text</strong> using predefined or user-defined sources.  
+            Built for <strong>speed, clarity, and insight</strong>.
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        st.title("👨‍💻 About the Author")
+        st.caption("Tanvir Anzum – AI & Data Researcher")
+
+        st.markdown("""
+            <div style='font-size: 14px; font-weight: normal;'>
+            Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style='font-size: 14px; font-weight: normal;'>
+            <br>
+            <a href="https://www.linkedin.com/in/aanzum" target="_blank">
+                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="16" style="vertical-align:middle; margin-right:6px;">
+                <strong>LinkedIn</strong>
+            </a>
+            &nbsp;&nbsp;
+            <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="16" style="vertical-align:middle; margin-right:6px;">
+                <strong>Research</strong>
+            </a>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        page = st.radio(            
             "Navigate to:",
             ["🌐 URL Summarizer", "📝 Text Summarizer"]
         )
