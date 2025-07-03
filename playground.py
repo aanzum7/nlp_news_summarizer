@@ -82,37 +82,63 @@ def reset_output(page_type):
     st.rerun()
 
 
-# ---------------------------
-# URL Summarizer (Page 1)
-# ---------------------------
-def url_page(api_key):
-    st.title("🌐 URL Summarizer")
+# Streamlit UI
+def main():
+    # Display author information in the sidebar
+    st.sidebar.title("About the Author")
+    st.sidebar.markdown("""
+        **Tanvir Anzum**  
+        *Author, Data Scientist, and Machine Learning Enthusiast*  
 
-    url = st.text_input("Enter News URL:")
+        With a passion for leveraging technology to solve real-world problems, I specialize in building recommendation systems, data analytics, and machine learning models. Currently, I work on innovative projects in the analytics & recommendation space.
 
-    source_mode = st.radio(
-        "Source Type",
-        ["Predefined Source", "Custom CSS Class"],
-        horizontal=True
+        ---
+
+        Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/aanzum/).
+        """)
+
+    # Add "About the Project" section above the author section
+    st.sidebar.title("About the Project")
+    st.sidebar.markdown("""
+        **InsightInMinutes: News Summarizer with AI**  
+        This project aims to provide quick and accurate summaries of news articles using advanced AI. 
+        It extracts content from news websites and generates summaries while preserving the original language and tone. 
+        The app supports multiple news sources and allows users to input custom CSS classes for content extraction.
+        """)
+
+    # Title for the app
+    st.title("InsightInMinutes: News Summarizer with AI")
+
+    # Description
+    st.write(
+        """
+        **Welcome to the News Summarizer!**  
+        Select a news source, input a URL, and I'll fetch and summarize its content using advanced AI, keeping the tone and language consistent with the original.
+        """
     )
 
-    target_classes = []
-    if source_mode == "Predefined Source":
-        source = st.radio(
-            "Choose Source",
-            ["Daily Prothom Alo", "The Daily Star", "DW", "The Business Standard", "Daily Manab Zamin"],
-            horizontal=True
-        )
-        target_classes_map = {
-            "Daily Prothom Alo": ["story-element story-element-text"],
-            "The Daily Star": ["pb-20 clearfix"],
-            "DW": ["c17j8gzx rc0m0op r1ebneao s198y7xq rich-text li5mn0y r16w0xvi w1fzgn0z blt0baw"],
-            "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
-            "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"],
-        }
-        target_classes = target_classes_map.get(source, [])
-    else:
-        custom_class = st.text_input("Enter CSS Class for Article Content:")
+    # Dropdown menu for selecting news source
+    source = st.selectbox(
+        "Select the news source:",
+        ["Daily Prothom Alo", "The Daily Star", "DW", "The Business Standard", "Daily Manab Zamin",
+         "Other"]
+    )
+
+    # Map source to target classes
+    target_classes_map = {
+        "Daily Prothom Alo": ["story-element story-element-text"],
+        "The Daily Star": ["pb-20 clearfix"],
+        "DW": ["cc0m0op s1ebneao rich-text t1it8i9i r1wgtjne wgx1hx2 b1ho1h07"],
+        "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
+        "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"]
+    }
+
+    # Initialize target classes
+    target_classes = target_classes_map.get(source, [])
+
+    # Show custom CSS class input only if "Other" is selected
+    if source == "Other":
+        custom_class = st.text_input("Enter a custom CSS class:")
         if custom_class:
             target_classes = [custom_class]
 
@@ -198,94 +224,12 @@ def text_page(api_key):
                         st.subheader("📑 Summary & Headline")
                         st.success(summary)
 
-                        st.session_state.generated_text = True
-                        st.session_state.last_summary = summary
-                        st.rerun()
-            else:
-                st.warning("Please input some text.")
-    else:
-        st.subheader("📑 Summary & Headline")
-        st.success(st.session_state.last_summary)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("♻️ Regenerate Summary", use_container_width=True):
-                with st.spinner("Regenerating..."):
-                    summary, error = summarize_content(
-                        input_text.strip(), api_key, min_limit, max_limit
-                    )
-                    if error:
-                        st.error(error)
-                    else:
-                        st.session_state.last_summary = summary
-                        st.rerun()
-        with col2:
-            if st.button("🏠 Home", use_container_width=True):
-                reset_output("text")
-
-
-# ---------------------------
-# Main App with Navigation
-# ---------------------------
-def main():
-    st.set_page_config(page_title="InsightInMinutes", layout="wide")
-
-    # ---------------------------
-    # Sidebar
-    # ---------------------------
-    with st.sidebar:
-        st.title("📰 InsightInMinutes")
-        st.caption("⚡ AI-powered News Summarizer")
-
-        st.markdown("""
-            <div style='font-size: 14px; font-weight: normal;'>
-            Summarize from <strong>URL</strong> or <strong>custom text</strong> using predefined or user-defined sources.  
-            Built for <strong>speed, clarity, and insight</strong>.
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        st.title("👨‍💻 About the Author")
-        st.caption("Tanvir Anzum – AI & Data Researcher")
-
-        st.markdown("""
-            <div style='font-size: 14px; font-weight: normal;'>
-            Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("""
-            <div style='font-size: 14px; font-weight: normal;'>
-            <br>
-            <a href="https://www.linkedin.com/in/aanzum" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="16" style="vertical-align:middle; margin-right:6px;">
-                <strong>LinkedIn</strong>
-            </a>
-            &nbsp;&nbsp;
-            <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="16" style="vertical-align:middle; margin-right:6px;">
-                <strong>Research</strong>
-            </a>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        page = st.radio(            
-            "Navigate to:",
-            ["🌐 URL Summarizer", "📝 Text Summarizer"]
-        )
-
-    api_key, error_api = read_api_key()
-    if error_api:
-        st.error(error_api)
-        return
-
-    if page == "🌐 URL Summarizer":
-        url_page(api_key)
-    else:
-        text_page(api_key)
+                        # Collect feedback after displaying the summary
+                        collect_feedback()
+                else:
+                    st.error("Failed to extract content from the provided URL. Please check the URL or try a different source.")
+        else:
+            st.error("Please provide both a valid URL and API key.")
 
 
 # ---------------------------

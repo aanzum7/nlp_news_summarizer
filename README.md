@@ -1,102 +1,74 @@
-Here's a sample `README.md` file you can use for your project. This README provides an overview of the project, installation instructions, usage, and other relevant details.
-
 ```markdown
-# News Summarizer
+# InsightInMinutes: News Summarizer with AI
 
-A Streamlit-based web application that fetches, summarizes, and provides headlines for news articles. The app uses the Generative AI model to generate accurate summaries while maintaining the original tone and language of the content.
+**InsightInMinutes** is an AI-powered news summarizer designed to help you quickly grasp the key points of news articles. By leveraging advanced generative AI, it fetches and summarizes content from various news sources while maintaining the original tone and language.
 
 ## Features
-- Extracts content from a provided URL.
-- Summarizes the content in the same language as the source.
-- Generates a headline for the summarized content.
-- Allows users to select different news sources for content extraction.
-- Supports custom CSS class configuration for unsupported news sources.
 
-## Prerequisites
+- **AI-powered Summarization**: Get concise summaries of news articles with a focus on preserving the original language and tone.
+- **Multiple News Sources**: Select from predefined news sources like Daily Prothom Alo, The Daily Star, DW, and more, or input a custom source.
+- **User-friendly Interface**: Easily input URLs of news articles, and the platform will do the rest.
+- **Real-time Summarization**: Instant fetching and summarization of articles using cutting-edge AI technology.
 
-Before running the app, ensure you have the following:
+## How It Works
 
-- Python 3.7 or higher
-- `pip` (Python package installer)
-- A valid **Generative AI API key** (e.g., for Gemini)
+1. **Select a News Source**: Choose from the available sources or provide your own custom CSS class if the source is not listed.
+2. **Input URL**: Provide the URL of the news article you want to summarize.
+3. **AI Summarization**: The platform uses generative AI to summarize the content while keeping the original language and tone intact.
+4. **View the Summary**: Get a succinct summary of the article along with the headline.
 
 ## Installation
 
-### 1. Clone the repository:
-```bash
-git clone https://github.com/your-username/news-summarizer.git
-cd news-summarizer
-```
+To run **InsightInMinutes** locally, follow these steps:
 
-### 2. Set up a Python virtual environment (optional but recommended):
-```bash
-python -m venv venv
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/insightinminutes.git
+   ```
 
-### 3. Activate the virtual environment:
-- On Windows:
-  ```bash
-  venv\Scripts\activate
-  ```
-- On macOS/Linux:
-  ```bash
-  source venv/bin/activate
-  ```
+2. Navigate to the project directory:
+   ```bash
+   cd insightinminutes
+   ```
 
-### 4. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+3. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 5. Add your API key:
-- Create a folder named `.streamlit` in the root of the project if it doesn't exist.
-- Inside the `.streamlit` folder, create a `secrets.toml` file with the following structure:
+4. Run the Streamlit app:
+   ```bash
+   streamlit run app.py
+   ```
 
+## Demo
+
+Check out the demo here: [InsightInMinutes Demo](https://insightinminutes.streamlit.app/?embed_options=dark_theme)
+
+## Technologies Used
+
+- **Streamlit**: For creating the interactive web interface.
+- **BeautifulSoup**: For web scraping and content extraction.
+- **Google Generative AI**: For content summarization.
+- **langdetect**: To detect the language of the content.
+
+## API Key Configuration
+
+To use the AI summarization feature, you need to configure the API key for Google Generative AI. Store your API key in the Streamlit secrets file (`.streamlit/secrets.toml`).
+
+Example `secrets.toml`:
 ```toml
 [genai]
-api_key = "your_actual_api_key"
+api_key = "your_api_key_here"
 ```
 
-> **Note**: Do not upload your `secrets.toml` file to any public repositories to keep your API key secure.
+## Contributing
 
-### 6. Run the app:
-```bash
-streamlit run summarizer.py
-```
-
-This will start the Streamlit app and open it in your default web browser.
-
-## Usage
-
-1. **Select a News Source**: Choose from pre-configured news sources (e.g., Daily Prothom Alo, The Daily Star, etc.), or provide a custom CSS class if the source is unsupported.
-2. **Enter the URL**: Provide the URL of a news article you'd like to summarize.
-3. **Click "Summarize"**: The app will fetch the content, generate a summary, and display it on the page.
-
-## Customization
-
-- **Adding New News Sources**: To add a new news source, add the target CSS class for the content extraction in the `target_classes_map` dictionary in the code.
-- **Adjusting Summarization Settings**: You can customize the generation settings like temperature, max tokens, etc., within the `summarize_content` function.
-
-## Dependencies
-
-This project uses the following Python libraries:
-
-- `streamlit`: Framework for creating web apps.
-- `requests`: For fetching the web page content.
-- `BeautifulSoup4`: For parsing HTML and extracting content.
-- `google.generativeai`: Google’s Generative AI API for summarization.
-- `langdetect`: For detecting the language of the content.
-
-To install the dependencies, run:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Troubleshooting
-
-- **API Key Issues**: Ensure that your `secrets.toml` is correctly configured and placed inside the `.streamlit` folder.
-- **No content extracted**: If the app is unable to extract content from the URL, verify that the target classes are correctly set for the news source.
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Commit your changes (`git commit -am 'Add new feature'`).
+4. Push to the branch (`git push origin feature-branch`).
+5. Create a new Pull Request.
 
 ## License
 
@@ -104,8 +76,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-### Notes:
-- Replace the GitHub link with your own repository URL.
-- Add more specific troubleshooting or feature-related sections as needed.
+Feel free to modify this template to suit your project's specific needs.
+```
 
-Let me know if you'd like me to adjust the README further!
+This template includes sections like an introduction, installation instructions, demo link, technology stack, and contribution guidelines. Let me know if you need any changes!
