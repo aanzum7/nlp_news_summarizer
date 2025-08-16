@@ -18,14 +18,14 @@ THEME = {
     "background_color": "#f4db95",      # Creamy old-paper
     "text_color": "#0d0d0d",            # Dark text
     "header_color": "#111111",          # Darker headings
-    "subheader_color": "#222222",       # Slightly lighter
-    "button_color": "#555555",          # Dark gray buttons
-    "button_hover_color": "#333333",
-    "card_border": "#cccccc",           # Light gray borders
+    "subheader_color": "#333333",       # Slightly lighter
+    "button_color": "#444444",          # Charcoal
+    "button_hover_color": "#222222",    # Almost black
+    "card_border": "#c7b78b",           # Antique brown border
     "card_bg": "#fffdfa",               # Light creamy boxes
     "headline_color": "#000000",        # Headline black
     "summary_color": "#111111",         # Summary dark gray
-    "section_padding": "20px",
+    "section_padding": "18px",
     "font_family": "Georgia, serif"
 }
 
@@ -43,6 +43,7 @@ st.markdown(f"""
 h1, h2, h3, h4, h5 {{
     text-align: center;
     color: {THEME['header_color']};
+    margin-bottom: 12px;
 }}
 h3 {{
     color: {THEME['subheader_color']};
@@ -51,6 +52,9 @@ h3 {{
 .stButton>button {{
     background-color: {THEME['button_color']};
     color: white;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 500;
     width: 100%;
 }}
 .stButton>button:hover {{
@@ -61,20 +65,15 @@ h3 {{
 .stTextArea textarea, .stTextInput>div>input {{
     background-color: {THEME['card_bg']} !important;
     border: 1px solid {THEME['card_border']} !important;
+    border-radius: 6px !important;
     color: {THEME['text_color']} !important;
     caret-color: {THEME['text_color']} !important;
 }}
 
-[data-baseweb="input"] label,
-[data-baseweb="input"] input::placeholder,
-[data-baseweb="textarea"] label,
-[data-baseweb="textarea"] textarea::placeholder {{
+[data-testid="stMarkdownContainer"] p {{
     color: {THEME['text_color']} !important;
-}}
-
-.css-1aumxhk, .css-1v0mbdj, .css-10trblm {{
-    color: {THEME['text_color']} !important;
-    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.6;
 }}
 
 .summary-section {{
@@ -83,8 +82,10 @@ h3 {{
     background-color: {THEME['card_bg']};
     border-radius: 10px;
     margin-top: 15px;
+    margin-bottom: 15px;
     text-align: center;
     color: {THEME['text_color']};
+    box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
 }}
 
 .sidebar-tabs {{
@@ -111,11 +112,6 @@ h3 {{
 .sidebar-tab:hover {{
     background-color: {THEME['button_hover_color']};
     color: white;
-}}
-
-/* Add gap after summary section for buttons */
-.summary-section + div, .summary-section + button {{
-    margin-top: 20px;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -211,20 +207,14 @@ def detect_source_from_url(url):
 def display_summary(summary_text):
     if summary_text:
         lines = summary_text.splitlines()
-        # Headline Section
         st.markdown(
             f"<div class='summary-section'><h3 style='color:{THEME['headline_color']}'>📰 Headline</h3>"
             f"<p>{lines[0]}</p></div>", unsafe_allow_html=True
         )
-        # Gap
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-        # Summary Section
         st.markdown(
             f"<div class='summary-section'><h3 style='color:{THEME['summary_color']}'>📄 Summary</h3>"
             f"<p>{' '.join(lines[1:])}</p></div>", unsafe_allow_html=True
         )
-        # Gap
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ---------------------------
 # URL Page
