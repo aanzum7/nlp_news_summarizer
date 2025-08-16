@@ -6,6 +6,114 @@ import langdetect
 from functools import lru_cache
 import re
 
+# ---------------------------
+# 🎨 THEME CONFIGURATION
+# ---------------------------
+THEME = {
+    "background_color": "#f4db95",      # Creamy old-paper
+    "text_color": "#0d0d0d",            # Dark text
+    "header_color": "#111111",          # Darker headings
+    "subheader_color": "#222222",       # Slightly lighter
+    "button_color": "#555555",          # Dark gray buttons
+    "button_hover_color": "#333333",
+    "card_border": "#cccccc",           # Light gray borders
+    "card_bg": "#fffdfa",               # Light creamy boxes
+    "headline_color": "#000000",        # Headline black
+    "summary_color": "#111111",         # Summary dark gray
+    "section_padding": "20px",
+    "font_family": "Georgia, serif"
+}
+
+# ---------------------------
+# CSS STYLING
+# ---------------------------
+st.markdown(f"""
+<style>
+.stApp {{
+    background-color: {THEME['background_color']};
+    color: {THEME['text_color']};
+    font-family: {THEME['font_family']};
+}}
+
+h1, h2, h3, h4, h5 {{
+    text-align: center;
+    color: {THEME['header_color']};
+}}
+h3 {{
+    color: {THEME['subheader_color']};
+}}
+
+.stButton>button {{
+    background-color: {THEME['button_color']};
+    color: white;
+    width: 100%;
+}}
+.stButton>button:hover {{
+    background-color: {THEME['button_hover_color']};
+    color: white;
+}}
+
+.stTextArea textarea, .stTextInput>div>input {{
+    background-color: {THEME['card_bg']} !important;
+    border: 1px solid {THEME['card_border']} !important;
+    color: {THEME['text_color']} !important;
+    caret-color: {THEME['text_color']} !important;
+}}
+
+[data-baseweb="input"] label,
+[data-baseweb="input"] input::placeholder,
+[data-baseweb="textarea"] label,
+[data-baseweb="textarea"] textarea::placeholder {{
+    color: {THEME['text_color']} !important;
+}}
+
+.css-1aumxhk, .css-1v0mbdj, .css-10trblm {{
+    color: {THEME['text_color']} !important;
+    font-weight: 500;
+}}
+
+.summary-section {{
+    padding: {THEME['section_padding']};
+    border: 1px solid {THEME['card_border']};
+    background-color: {THEME['card_bg']};
+    border-radius: 10px;
+    margin-top: 15px;
+    text-align: center;
+    color: {THEME['text_color']};
+}}
+
+.sidebar-tabs {{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}}
+.sidebar-tab {{
+    padding: 8px 12px;
+    background-color: {THEME['card_bg']};
+    border: 1px solid {THEME['card_border']};
+    border-radius: 6px;
+    color: {THEME['text_color']};
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    flex: 1;
+}}
+.sidebar-tab.active {{
+    background-color: {THEME['button_color']};
+    color: white;
+}}
+.sidebar-tab:hover {{
+    background-color: {THEME['button_hover_color']};
+    color: white;
+}}
+
+/* Add gap after summary section for buttons */
+.summary-section + div, .summary-section + button {{
+    margin-top: 20px;
+}}
+</style>
+""", unsafe_allow_html=True)
 
 # ---------------------------
 # API Key Loader
@@ -16,7 +124,6 @@ def read_api_key():
     except KeyError:
         return None, "API key missing in `.streamlit/secrets.toml`."
 
-
 # ---------------------------
 # URL Extractor
 # ---------------------------
@@ -25,7 +132,6 @@ def extract_content_from_url(url, target_classes):
         response = requests.get(url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-
         paragraphs = []
         for target_class in target_classes:
             paragraphs.extend(
@@ -40,7 +146,6 @@ def extract_content_from_url(url, target_classes):
     except Exception as e:
         return None, f"Error: {e}"
 
-
 # ---------------------------
 # Summarizer
 # ---------------------------
@@ -54,14 +159,12 @@ def summarize_content(content, api_key, min_limit, max_limit):
             generation_config={"temperature": 0.4, "top_p": 0.9, "max_output_tokens": 1024},
         )
         chat = model.start_chat()
-
         prompt = (
             f"You are a journalist summarizing content in {lang}. "
             f"Generate a headline and a summary within {min_limit} to {max_limit} words, "
             "preserving the language and tone.\n\n"
             f"Content:\n{content}"
         )
-
         response = chat.send_message(prompt)
         if response and response.text:
             return response.text.strip(), None
@@ -69,9 +172,8 @@ def summarize_content(content, api_key, min_limit, max_limit):
     except Exception as e:
         return None, f"Error summarizing: {e}"
 
-
 # ---------------------------
-# Reset Only Output (Not Input)
+# Reset Output
 # ---------------------------
 def reset_output(page_type):
     if page_type == "url":
@@ -82,9 +184,8 @@ def reset_output(page_type):
         st.session_state.pop("last_summary", None)
     st.rerun()
 
-
 # ---------------------------
-# Helper: Detect Source from URL
+# Detect Source
 # ---------------------------
 def detect_source_from_url(url):
     patterns = {
@@ -99,16 +200,38 @@ def detect_source_from_url(url):
             return name
     return "Other"
 
+# ---------------------------
+# Display Summary
+# ---------------------------
+# ---------------------------
+# Display Summary with consistent spacing
+# ---------------------------
+def display_summary(summary_text):
+    if summary_text:
+        lines = summary_text.splitlines()
+        # Headline Section
+        st.markdown(
+            f"<div class='summary-section'><h3 style='color:{THEME['headline_color']}'>📰 Headline</h3>"
+            f"<p>{lines[0]}</p></div>", unsafe_allow_html=True
+        )
+        # Gap between headline and summary
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+        # Summary Section
+        st.markdown(
+            f"<div class='summary-section'><h3 style='color:{THEME['summary_color']}'>📄 Summary</h3>"
+            f"<p>{' '.join(lines[1:])}</p></div>", unsafe_allow_html=True
+        )
+        # Gap between summary and buttons
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ---------------------------
-# URL Summarizer (Page 1)
+# URL Page
 # ---------------------------
 def url_page(api_key):
     st.title("🌐 URL Summarizer")
-
     url = st.text_input("Enter News URL:")
 
-    # --- Reset output if URL is changed or cleared ---
     if "last_url" not in st.session_state:
         st.session_state.last_url = ""
     if url != st.session_state.last_url:
@@ -117,7 +240,6 @@ def url_page(api_key):
         st.session_state.last_summary = None
 
     detected_source = detect_source_from_url(url) if url else None
-
     target_classes_map = {
         "Daily Prothom Alo": ["story-element story-element-text"],
         "The Daily Star": ["pb-20 clearfix"],
@@ -127,27 +249,22 @@ def url_page(api_key):
     }
 
     if detected_source and detected_source != "Other":
-        source = detected_source
-        st.info(f"Detected Source: **{source}**")
-        target_classes = target_classes_map.get(source, [])
+        st.info(f"Detected Source: **{detected_source}**")
+        target_classes = target_classes_map.get(detected_source, [])
         custom_class = ""
     else:
-        source = "Other"
-        st.info("Source not recognized. Please provide the CSS class for the article content.")
+        st.info("Source not recognized. Provide CSS class for article content.")
         custom_class = st.text_input("Enter CSS Class for Article Content:")
         target_classes = [custom_class] if custom_class else []
 
-    min_limit, max_limit = st.slider(
-        "Set Summary Length Range (words):",
-        50, 250, (70, 150)
-    )
+    min_limit, max_limit = st.slider("Set Summary Length Range (words):", 50, 250, (70, 150))
 
     if "generated_url" not in st.session_state:
         st.session_state.generated_url = False
 
     if not st.session_state.generated_url:
         if st.button("🚀 Generate Summary", use_container_width=True):
-            if url and target_classes and (source != "Other" or custom_class):
+            if url and target_classes and (detected_source != "Other" or custom_class):
                 with st.spinner("Fetching and Summarizing..."):
                     content, error = extract_content_from_url(url, target_classes)
                     if error:
@@ -157,9 +274,7 @@ def url_page(api_key):
                         if error:
                             st.error(error)
                         else:
-                            st.subheader("📑 Summary & Headline")
-                            st.success(summary)
-
+                            display_summary(summary)
                             st.session_state.generated_url = True
                             st.session_state.last_summary = summary
                             st.rerun()
@@ -168,9 +283,7 @@ def url_page(api_key):
             else:
                 st.warning("Please enter URL and CSS Class.")
     else:
-        st.subheader("📑 Summary & Headline")
-        st.success(st.session_state.last_summary)
-
+        display_summary(st.session_state.last_summary)
         col1, col2 = st.columns(2)
         with col1:
             if st.button("♻️ Regenerate Summary", use_container_width=True):
@@ -185,25 +298,17 @@ def url_page(api_key):
                         else:
                             st.session_state.last_summary = summary
                             st.rerun()
-                    else:
-                        st.error("❌ Failed to extract content.")
         with col2:
             if st.button("🏠 Home", use_container_width=True):
                 reset_output("url")
 
-
 # ---------------------------
-# Text Summarizer (Page 2)
+# Text Page
 # ---------------------------
 def text_page(api_key):
     st.title("📝 Text Summarizer")
-
     input_text = st.text_area("Paste Your Text Here:", height=250)
-
-    min_limit, max_limit = st.slider(
-        "Set Summary Length Range (words):",
-        50, 250, (70, 150)
-    )
+    min_limit, max_limit = st.slider("Set Summary Length Range (words):", 50, 250, (70, 150))
 
     if "generated_text" not in st.session_state:
         st.session_state.generated_text = False
@@ -216,25 +321,19 @@ def text_page(api_key):
                     if error:
                         st.error(error)
                     else:
-                        st.subheader("📑 Summary & Headline")
-                        st.success(summary)
-
+                        display_summary(summary)
                         st.session_state.generated_text = True
                         st.session_state.last_summary = summary
                         st.rerun()
             else:
                 st.warning("Please input some text.")
     else:
-        st.subheader("📑 Summary & Headline")
-        st.success(st.session_state.last_summary)
-
+        display_summary(st.session_state.last_summary)
         col1, col2 = st.columns(2)
         with col1:
             if st.button("♻️ Regenerate Summary", use_container_width=True):
                 with st.spinner("Regenerating..."):
-                    summary, error = summarize_content(
-                        input_text.strip(), api_key, min_limit, max_limit
-                    )
+                    summary, error = summarize_content(input_text.strip(), api_key, min_limit, max_limit)
                     if error:
                         st.error(error)
                     else:
@@ -244,37 +343,42 @@ def text_page(api_key):
             if st.button("🏠 Home", use_container_width=True):
                 reset_output("text")
 
-
 # ---------------------------
-# Main App with Navigation
+# Main App
 # ---------------------------
 def main():
     st.set_page_config(page_title="InsightInMinutes", layout="wide")
 
-    # ---------------------------
-    # Sidebar
-    # ---------------------------
+    # Sidebar Tabs & Info
     with st.sidebar:
         st.title("📰 InsightInMinutes")
         st.caption("⚡ AI-powered News Summarizer")
-
         st.markdown("""
             <div style='font-size: 14px; font-weight: normal;'>
             Summarize from <strong>URL</strong> or <strong>custom text</strong> using predefined or user-defined sources.  
             Built for <strong>speed, clarity, and insight</strong>.
             </div>
-            """, unsafe_allow_html=True)
-
+        """, unsafe_allow_html=True)
         st.markdown("---")
 
+        if "selected_page" not in st.session_state:
+            st.session_state.selected_page = "URL"
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🌐 URL Summarizer", key="tab_url"):
+                st.session_state.selected_page = "URL"
+        with col2:
+            if st.button("📝 Text Summarizer", key="tab_text"):
+                st.session_state.selected_page = "TEXT"
+
+        st.markdown("---")
         st.title("👨‍💻 About the Author")
         st.caption("Tanvir Anzum – AI & Data Researcher")
-
         st.markdown("""
             <div style='font-size: 14px; font-weight: normal;'>
             Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
             </div>
-            """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
         st.markdown("""
             <div style='font-size: 14px; font-weight: normal;'>
@@ -289,25 +393,19 @@ def main():
                 <strong>Research</strong>
             </a>
             </div>
-            """, unsafe_allow_html=True)
-
+        """, unsafe_allow_html=True)
         st.markdown("---")
-
-        page = st.radio(            
-            "Navigate to:",
-            ["🌐 URL Summarizer", "📝 Text Summarizer"]
-        )
 
     api_key, error_api = read_api_key()
     if error_api:
         st.error(error_api)
         return
 
-    if page == "🌐 URL Summarizer":
+    page = st.session_state.selected_page
+    if page == "URL":
         url_page(api_key)
     else:
         text_page(api_key)
-
 
 # ---------------------------
 # Run App
