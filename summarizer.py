@@ -7,6 +7,11 @@ from functools import lru_cache
 import re
 
 # ---------------------------
+# ✅ Page Config (must be first Streamlit command!)
+# ---------------------------
+st.set_page_config(page_title="InsightInMinutes", layout="wide")
+
+# ---------------------------
 # 🎨 THEME CONFIGURATION
 # ---------------------------
 THEME = {
@@ -203,9 +208,6 @@ def detect_source_from_url(url):
 # ---------------------------
 # Display Summary
 # ---------------------------
-# ---------------------------
-# Display Summary with consistent spacing
-# ---------------------------
 def display_summary(summary_text):
     if summary_text:
         lines = summary_text.splitlines()
@@ -214,15 +216,14 @@ def display_summary(summary_text):
             f"<div class='summary-section'><h3 style='color:{THEME['headline_color']}'>📰 Headline</h3>"
             f"<p>{lines[0]}</p></div>", unsafe_allow_html=True
         )
-        # Gap between headline and summary
+        # Gap
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-
         # Summary Section
         st.markdown(
             f"<div class='summary-section'><h3 style='color:{THEME['summary_color']}'>📄 Summary</h3>"
             f"<p>{' '.join(lines[1:])}</p></div>", unsafe_allow_html=True
         )
-        # Gap between summary and buttons
+        # Gap
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ---------------------------
@@ -347,8 +348,6 @@ def text_page(api_key):
 # Main App
 # ---------------------------
 def main():
-    st.set_page_config(page_title="InsightInMinutes", layout="wide")
-
     # Sidebar Tabs & Info
     with st.sidebar:
         st.title("📰 InsightInMinutes")
