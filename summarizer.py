@@ -9,7 +9,7 @@ import re
 # ---------------------------
 # ✅ Page Config (must be first Streamlit command!)
 # ---------------------------
-st.set_page_config(page_title="InsightInMinutes", layout="wide")
+st.set_page_config(page_title="InsightInMinutes", page_icon="🔎", layout="wide")
 
 # ---------------------------
 # 🎨 THEME CONFIGURATION
