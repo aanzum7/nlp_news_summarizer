@@ -156,7 +156,7 @@ def summarize_content(content, api_key, min_limit, max_limit):
         lang = langdetect.detect(content)
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash-Lite",
+            model_name="gemini-2.5-flash-lite",
             generation_config={"temperature": 0.4, "top_p": 0.9, "max_output_tokens": 1024},
         )
         chat = model.start_chat()
