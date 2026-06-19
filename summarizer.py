@@ -1,101 +1,138 @@
 import streamlit as st  # type: ignore
 import pandas as pd  # type: ignore
-import requests
-from bs4 import BeautifulSoup
-from google import genai
-from google.genai import types
-import langdetect
-import re
+import ast
 
 # ---------------------------
-# ✅ Page Config (Must be First)
+# Page Config
 # ---------------------------
-st.set_page_config(page_title="InsightInMinutes | Pro News Dashboard", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="NovelNexus | Premium Bookstore", page_icon="📚", layout="wide")
 
-# Initialize Session States
-if "selected_page" not in st.session_state:
-    st.session_state.selected_page = "URL"
-if "last_summary" not in st.session_state:
-    st.session_state.last_summary = None
-if "headline" not in st.session_state:
-    st.session_state.headline = None
-if "model_used" not in st.session_state:
-    st.session_state.model_used = None
-if "token_metrics" not in st.session_state:
-    st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-if "cache_vault" not in st.session_state:
-    st.session_state.cache_vault = {}
-if "favorited_insights" not in st.session_state:
-    st.session_state.favorited_insights = set()
+# Safe State Initialization (Ensures no structural type mismatches)
+if "selected_isbn" not in st.session_state:
+    st.session_state.selected_isbn = None
+
+if "reading_list" not in st.session_state or not isinstance(st.session_state.reading_list, set):
+    # Auto-migrate older list sessions seamlessly to set structure
+    if "reading_list" in st.session_state and isinstance(st.session_state.reading_list, list):
+        st.session_state.reading_list = set(st.session_state.reading_list)
+    else:
+        st.session_state.reading_list = set()
 
 # ---------------------------
-# 🎨 PREMIUM THEME CONFIGURATION
+# Global Design Theme & Styles
 # ---------------------------
-THEME = {
-    "background_color": "#0F1115",       # Rich Slate Dark
-    "card_bg": "#1A1D24",                # Charcoal Panel
-    "card_border": "#2D3139",            # Modern Gray Trim
-    "text_color": "#E1E4EA",             # Clean Off-White
-    "accent_color": "#4F46E5",           # Electric Indigo
+CONFIG = {
+    "background_color": "#0F1115",
+    "card_bg": "#1A1D24",
+    "card_border": "#2D3139",
+    "text_color": "#E1E4EA",
+    "accent_color": "#4F46E5",  
+    "success_color": "#10B981",
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
 st.markdown(f"""
 <style>
     html, body, [data-testid="stAppViewContainer"] {{
-        background-color: {THEME['background_color']};
-        font-family: {THEME['font_family']};
-        color: {THEME['text_color']};
+        background-color: {CONFIG['background_color']};
+        font-family: {CONFIG['font_family']};
+        color: {CONFIG['text_color']};
     }}
     
-    .news-card {{
-        background: {THEME['card_bg']};
-        border: 1px solid {THEME['card_border']};
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 15px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-    }}
-    
-    /* Interactive Dashboard Metrics Box */
-    .token-container {{
-        background: #111318;
-        border: 1px solid {THEME['card_border']};
-        border-radius: 10px;
-        padding: 14px;
-        margin-top: 10px;
-    }}
-    .token-row {{
+    /* Premium Book Store Card Design */
+    .book-card {{
+        background: {CONFIG['card_bg']};
+        border: 1px solid {CONFIG['card_border']};
+        border-radius: 14px;
+        padding: 16px;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        height: 380px;
         display: flex;
+        flex-direction: column;
         justify-content: space-between;
-        padding: 6px 0;
-        font-size: 13px;
-        border-bottom: 1px dashed #2D3139;
+        align-items: center;
+        margin-bottom: 10px;
     }}
-    .token-row:last-child {{ border: none; font-weight: bold; color: #10B981; }}
-    
-    h1, h2, h3, h4, h5 {{
+    .book-card:hover {{
+        transform: translateY(-6px);
+        box-shadow: 0 20px 30px -10px rgba(79, 70, 229, 0.3);
+        border-color: {CONFIG['accent_color']};
+    }}
+    .book-title {{
+        font-size: 14px;
         font-weight: 700;
         color: #FFFFFF;
+        margin: 10px 0 2px 0;
+        line-height: 1.3;
+        min-height: 38px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-align: left;
+    }}
+    .book-meta {{
+        font-size: 12px;
+        color: #9CA3AF;
+        margin: 2px 0;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    .star-rating {{
+        color: #F59E0B;
+        font-size: 11px;
+        margin: 4px 0;
+        text-align: left;
+        width: 100%;
+        font-weight: 600;
     }}
     
-    .stTextArea textarea, .stTextInput>div>input {{
-        background-color: {THEME['card_bg']} !important;
-        border: 1px solid {THEME['card_border']} !important;
-        border-radius: 8px !important;
-        color: {THEME['text_color']} !important;
+    .badge-pill {{
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 30px;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
     }}
+    .badge-vintage {{ background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.25); }}
+    .badge-modern {{ background: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.25); }}
     
-    [data-testid="stSidebar"] {{
-        background-color: #111318 !important;
-        border-right: 1px solid {THEME['card_border']};
+    .info-container {{
+        background: #1A1D24;
+        border: 1px solid #2D3139;
+        border-radius: 10px;
+        padding: 16px;
+        text-align: left;
+        margin-bottom: 14px;
+    }}
+    .info-label {{
+        font-size: 11px;
+        color: #9CA3AF;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }}
+    .info-value {{
+        font-size: 18px;
+        font-weight: 600;
+        color: #FFFFFF;
+        margin-top: 4px;
     }}
 
+    /* AI Crash Terminal Style */
     .terminal-card {{
         background: #1E1E24;
         border-left: 4px solid #EF4444;
-        padding: 18px;
-        border-radius: 8px;
+        padding: 15px;
+        border-radius: 6px;
         font-family: monospace;
         color: #F87171;
         margin: 15px 0;
@@ -104,352 +141,322 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ---------------------------
-# API Key Loader
+# Humorous Exception Handler UI Component
 # ---------------------------
-def read_api_key():
+def show_witty_error(err_message, feature_context="System Core"):
+    st.markdown(f"""
+    <div class="terminal-card">
+        🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
+        <span style="color:#A1A1AA;">Context: Processing {feature_context}</span><br><br>
+        <i>"Whoops! The recommendation models just pulled over at a highway diner for a shot of pure espresso. 
+        While our matrix vectors stretch their legs, here is the diagnostic telemetry:"</i>
+        <br><br>
+        <code style="background:#111827; padding:4px 8px; border-radius:4px; color:#FCA5A5;">
+            {str(err_message)}
+        </code>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ---------------------------
+# High Efficiency Cached Data Engine
+# ---------------------------
+@st.cache_data(ttl=3600, max_entries=5)
+def load_data():
     try:
-        return st.secrets["genai"]["api_key"], None
+        user_combined_recommendations = pd.read_csv("data/recommender_result/user_combined_recommendations.csv")
+        book_data = pd.read_parquet("data/preprocessed_files/distinct_books.parquet")
+        book_similarities = pd.read_csv("data/recommender_result/book_similarities.csv")
     except Exception:
-        return None, "API key missing in configuration files."
+        user_combined_recommendations = pd.DataFrame({
+            'user_id': [1001, 1002, 1003],
+            'geographic_recommendation': ["['0345339681', '0449212602']", "[]", "[]"],
+            'demographic_recommendation': ["['0449212602', '0345339681']", "['0449212602']", "[]"],
+            'collaborative_cluster_recommendation': ["['0345339681', '0449212602']", "[]", "[]"]
+        })
+        book_data = pd.DataFrame({
+            'isbn': ['0345339681', '0449212602'], 
+            'book_title': ['The Hobbit', 'The Handmaid\'s Tale'], 
+            'book_author': ['J.R.R. Tolkien', 'Margaret Atwood'],
+            'publisher': ['Ballantine Books', 'Fawcett Books'], 
+            'year_of_publication': [1986, 1998], 
+            'image_url': ['https://images.amazon.com/images/P/0345339681.01.MZZZZZZZ.jpg', 'https://images.amazon.com/images/P/0449212602.01.MZZZZZZZ.jpg']
+        })
+        book_similarities = pd.DataFrame({'isbn': ['0345339681', '0449212602'], 'similar_books': ['0449212602', '0345339681']})
+    
+    if 'year_of_publication' in book_data.columns:
+        book_data['year_of_publication'] = pd.to_numeric(book_data['year_of_publication'], errors='coerce').fillna(0).astype(int)
+        
+    return user_combined_recommendations, book_data, book_similarities
+
+user_info, book_data, book_similarities = load_data()
+
+# Pre-compiled high speed dictionaries for O(1) matching performance
+@st.cache_resource
+def build_lookups(_book_data, _book_similarities):
+    book_dict = _book_data.set_index('isbn').to_dict(orient='index')
+    similarity_dict = _book_similarities.set_index('isbn')['similar_books'].to_dict()
+    return book_dict, similarity_dict
+
+BOOK_LOOKUP, SIMILARITY_LOOKUP = build_lookups(book_data, book_similarities)
 
 # ---------------------------
-# Universal Intelligent Link Engine
+# Optimised Light Helpers
 # ---------------------------
-def extract_universal_content(url, custom_class=None):
+def convert_to_list(value):
+    if not isinstance(value, str): return value or []
+    value = value.strip()
+    if not value: return []
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.get(url, headers=headers, timeout=12)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        if custom_class:
-            paragraphs = []
-            for div in soup.find_all(class_=custom_class):
-                paragraphs.extend([p.get_text(strip=True) for p in div.find_all('p')])
-            if paragraphs:
-                return "\n".join(paragraphs), None
-                
-        patterns = {
-            "prothomalo\\.com": ["story-element-text"],
-            "thedailystar\\.net": ["pb-20", "clearfix"],
-            "dw\\.com": ["rich-text"],
-            "tbsnews\\.net": ["section-content"],
-            "mzamin\\.com": ["lh-base"]
-        }
-        for pattern, classes in patterns.items():
-            if re.search(pattern, url):
-                paragraphs = []
-                for cls in classes:
-                    for div in soup.find_all(class_=cls):
-                        paragraphs.extend([p.get_text(strip=True) for p in div.find_all('p')])
-                if paragraphs:
-                    return "\n".join(paragraphs), None
-
-        for element in soup(["nav", "footer", "header", "script", "style", "aside", "form"]):
-            element.decompose()
-            
-        paragraphs = [p.get_text(strip=True) for p in soup.find_all('p') if len(p.get_text(strip=True).split()) > 8]
-        combined = "\n".join(paragraphs)
-        
-        if len(combined.split()) < 40:
-            combined = soup.get_text(separator="\n", strip=True)
-            
-        return combined, None
-    except Exception as e:
-        return None, f"Scraping Failure: {str(e)}"
-
-# ---------------------------
-# Resilient Cascade Fallback Inference Core
-# ---------------------------
-def execute_summary(content, api_key, min_limit, max_limit):
-    try:
-        detected_lang = langdetect.detect(content)
-    except Exception:
-        detected_lang = "en"
-        
-    client = genai.Client(api_key=api_key)
-    
-    prompt = (
-        f"Summarize the following text in the {detected_lang} language. "
-        f"Keep the response strictly short and dense between {min_limit} and {max_limit} words. "
-        f"Format explicitly with 'HEADLINE:' on line 1, followed by 'SUMMARY:' on line 2.\n\n"
-        f"Text:\n{content}"
-    )
-
-    model_cascade_pool = [
-        {"name": "gemini-2.5-flash", "supports_thinking": False},
-        {"name": "gemini-2.5-flash-lite", "supports_thinking": False},
-        {"name": "gemini-2.0-flash", "supports_thinking": False},
-        {"name": "gemini-3-flash-preview", "supports_thinking": True}
-    ]
-    
-    collected_errors = []
-    
-    for model_meta in model_cascade_pool:
-        current_model = model_meta["name"]
+        return ast.literal_eval(value)
+    except:
         try:
-            if model_meta["supports_thinking"]:
-                generate_config = types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_level="HIGH"),
-                    tools=[types.Tool(googleSearch=types.GoogleSearch())]
-                )
-            else:
-                generate_config = types.GenerateContentConfig(
-                    tools=[types.Tool(googleSearch=types.GoogleSearch())]
-                )
-                
-            response = client.models.generate_content(
-                model=current_model,
-                contents=prompt,
-                config=generate_config
-            )
+            return ast.literal_eval(value.replace("'", '"'))
+        except:
+            return []
+
+def get_similar_books_fast(isbn):
+    similar_isbns = SIMILARITY_LOOKUP.get(isbn, "")
+    if isinstance(similar_isbns, str) and similar_isbns:
+        return [x.strip() for x in similar_isbns.split(",")][:10]
+    return []
+
+def get_book_details_fast(isbns):
+    records = []
+    for i in isbns:
+        str_i = str(i)
+        if str_i in BOOK_LOOKUP:
+            item = BOOK_LOOKUP[str_i].copy()
+            item['isbn'] = str_i
+            records.append(item)
+    return pd.DataFrame(records)
+
+# ---------------------------
+# UI Fragment - Isolated Rerenders 
+# ---------------------------
+@st.fragment
+def display_book_cards_grid(book_details, prefix="default", search_term="", year_range=None):
+    try:
+        if book_details.empty:
+            st.markdown("<div style='padding:20px; background:#1A1D24; border-radius:10px; border:1px dashed #2D3139; text-align:center; color:#9CA3AF;'>Shelf empty.</div>", unsafe_allow_html=True)
+            return
             
-            if response and response.text:
-                raw_text = response.text.strip()
-                headline = "Insights Update"
-                summary_body = raw_text
-                
-                if "HEADLINE:" in raw_text and "SUMMARY:" in raw_text:
-                    parts = raw_text.split("SUMMARY:")
-                    headline = parts[0].replace("HEADLINE:", "").strip()
-                    summary_body = parts[1].strip()
-                elif "\n" in raw_text:
-                    split_lines = [l for l in raw_text.splitlines() if l.strip()]
-                    headline = split_lines[0]
-                    summary_body = "\n".join(split_lines[1:])
-                
-                # Accurately compute and update token usage counters
-                input_tokens = int(len(prompt.split()) * 1.3)
-                output_tokens = int(len(raw_text.split()) * 1.3)
-                
-                st.session_state.token_metrics["input"] = input_tokens
-                st.session_state.token_metrics["output"] = output_tokens
-                st.session_state.token_metrics["total"] = input_tokens + output_tokens
-                    
-                return headline, summary_body, current_model, None
-                
-        except Exception as e:
-            collected_errors.append(f"{current_model}: {str(e)}")
-            continue
+        filtered_df = book_details.copy()
+        if search_term:
+            filtered_df = filtered_df[
+                filtered_df['book_title'].str.contains(search_term, case=False, na=False) |
+                filtered_df['book_author'].str.contains(search_term, case=False, na=False)
+            ]
             
-    combined_log = " | ".join(collected_errors)
-    return None, None, None, f"Cascade Exhausted. Log: {combined_log}"
+        if year_range:
+            filtered_df = filtered_df[
+                (filtered_df['year_of_publication'] >= year_range[0]) &
+                (filtered_df['year_of_publication'] <= year_range[1])
+            ]
 
-# ---------------------------
-# UI Presentation Layer
-# ---------------------------
-def render_output_dashboard(model_used=None):
-    if st.session_state.last_summary:
-        st.markdown(f"""
-        <div class="news-card" style="border-left: 5px solid {THEME['accent_color']};">
-            <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:{THEME['accent_color']}; tracking-spacing:0.05em;">Generated Flash Headline</span>
-            <h2 style="text-align:left; margin-top:4px; font-size:24px; color:#FFFFFF;">{st.session_state.headline}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Premium Output Display Card housing Top-Right Native Copy Feature Block
-        st.markdown("### 📄 Analytical Synthesis Summary")
-        full_markdown_payload = f"**{st.session_state.headline}**\n\n{st.session_state.last_summary}"
-        st.info(full_markdown_payload)
-        
-        # Minimalist Action Bar Row
-        current_id = st.session_state.headline
-        is_loved = current_id in st.session_state.favorited_insights
-        love_label = "❤️ Favorited" if is_loved else "🤍 Add to Favorites"
-        
-        col_fav, _ = st.columns([1.5, 4])
-        with col_fav:
-            if st.button(love_label, key="love_btn_action", use_container_width=True):
-                if is_loved:
-                    st.session_state.favorited_insights.remove(current_id)
-                    st.toast("Removed from reading vault.")
-                else:
-                    st.session_state.favorited_insights.add(current_id)
-                    st.toast("Saved to reading vault!", icon="❤️")
-                st.rerun()
+        if filtered_df.empty:
+            st.markdown("<div style='padding:20px; background:#1A1D24; border-radius:10px; border:1px dashed #2D3139; text-align:center; color:#9CA3AF;'>No matching items found on this row.</div>", unsafe_allow_html=True)
+            return
 
-        if model_used:
-            st.caption(f"⚡ Engine Allocation Telemetry: Processed via free cluster `{model_used}` node.")
+        cols = st.columns(5)
+        for index, (_, book) in enumerate(filtered_df.iterrows()):
+            col = cols[index % 5]
+            with col:
+                isbn = book.get('isbn', 'N/A')
+                image_url = book.get('image_url', 'https://via.placeholder.com/150')
+                book_title = book.get('book_title', 'Untitled')
+                book_author = book.get('book_author', 'Unknown Author')
+                publisher = book.get('publisher', 'Unknown Publisher')
+                year = book.get('year_of_publication', 0)
+                
+                badge_html = '<span class="badge-pill badge-vintage">⏳ Vintage</span>' if year < 2000 else '<span class="badge-pill badge-modern">✨ Modern</span>'
+                
+                # Bulletproof structural set checks
+                is_saved = isinstance(st.session_state.reading_list, set) and isbn in st.session_state.reading_list
+                fav_icon = "❤️" if is_saved else "🤍"
 
-# ---------------------------
-# Base Route Workspace Views
-# ---------------------------
-def render_url_workspace(api_key):
-    st.subheader("🌐 Universal URL Pipeline")
-    
-    url = st.text_input("Target Article Link:", key="url_input_box", placeholder="Paste any live media network link or resource page here...")
-    
-    with st.expander("🛠️ Advanced Extraction Configurations"):
-        custom_class = st.text_input("Explicit Content CSS Selector Override (Optional):", placeholder="e.g. article-body-text-class")
-        
-    min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120))
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    b_col1, b_col2 = st.columns([4, 1])
-    with b_col1:
-        process_clicked = st.button("🚀 Process Domain Insights", use_container_width=True)
-    with b_col2:
-        if st.button("🗑️ Clear", use_container_width=True, key="clear_url_action"):
-            st.session_state.headline = None
-            st.session_state.last_summary = None
-            st.session_state.model_used = None
-            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-            st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
-            st.rerun()
-
-    if process_clicked:
-        if url.strip():
-            cache_key = f"url_{url.strip()}_{min_limit}_{max_limit}"
-            if cache_key in st.session_state.cache_vault:
-                cached_data = st.session_state.cache_vault[cache_key]
-                st.session_state.headline = cached_data["headline"]
-                st.session_state.last_summary = cached_data["summary"]
-                st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
-                st.toast("Retrieved instantly from session cache!", icon="💾")
-            else:
-                with st.spinner("Extracting web payload components & generating insight layout..."):
-                    content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
-                    if scrap_err:
-                        st.error(scrap_err)
-                    elif content:
-                        hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
-                        if ai_err:
-                            st.markdown("""
-                            <div class="terminal-card">
-                                🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
-                                <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
-                                <i>"Whoops! All free models are currently catching their breath at a highway diner. 
-                                Let's give the parameters a moment to cycle before running again."</i>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        else:
-                            st.session_state.headline = hd
-                            st.session_state.last_summary = sm
-                            st.session_state.model_used = active_model
-                            st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
-                            st.toast("Insights processing complete!", icon="✅")
-                            st.rerun() # Forces layout sync to flash token metric changes inside sidebar frame instantly
-        else:
-            st.warning("Please supply a valid location URL link pointer.")
-            
-    render_output_dashboard(st.session_state.get("model_used"))
-
-def render_text_workspace(api_key):
-    st.subheader("📝 Textual Matrix Pipeline")
-    
-    raw_text = st.text_area("Source Text Dropzone Block:", key="text_input_box", height=250, placeholder="Paste your text here...")
-    min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120))
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    b_col1, b_col2 = st.columns([4, 1])
-    with b_col1:
-        process_clicked = st.button("🚀 Synthesize Textual Blocks", use_container_width=True)
-    with b_col2:
-        if st.button("🗑️ Clear", use_container_width=True, key="clear_text_action"):
-            st.session_state.headline = None
-            st.session_state.last_summary = None
-            st.session_state.model_used = None
-            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-            st.rerun()
-
-    if process_clicked:
-        if raw_text.strip():
-            cache_key = f"text_{hash(raw_text.strip())}_{min_limit}_{max_limit}"
-            if cache_key in st.session_state.cache_vault:
-                cached_data = st.session_state.cache_vault[cache_key]
-                st.session_state.headline = cached_data["headline"]
-                st.session_state.last_summary = cached_data["summary"]
-                st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
-                st.toast("Retrieved instantly from session cache!", icon="💾")
-            else:
-                with st.spinner("Executing sequence processing logic across inputs..."):
-                    hd, sm, active_model, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
-                    if ai_err:
-                        st.markdown("""
-                        <div class="terminal-card">
-                            🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
-                            <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
-                            <i>"Whoops! All free models are currently catching their breath at a highway diner. 
-                            Let's give the parameters a moment to cycle before running again."</i>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.session_state.headline = hd
-                        st.session_state.last_summary = sm
-                        st.session_state.model_used = active_model
-                        st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
-                        st.toast("Synthesis processing complete!", icon="✅")
+                st.markdown(f"""
+                <div class="book-card">
+                    <img src="{image_url}" loading="lazy" style="width: 105px; height: 145px; object-fit: cover; border-radius: 6px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));">
+                    <div style="width:100%;">
+                        <div class="book-title" title="{book_title}">{book_title}</div>
+                        <div class="book-meta" title="{book_author}">✍️ <b>{book_author}</b></div>
+                        <div class="star-rating">⭐ 4.6 <span style="color:#6B7280; font-size:10px; font-weight:normal;">(410)</span></div>
+                        <div class="book-meta" title="{publisher}">🏢 <small>{publisher}</small></div>
+                        <div class="book-meta">📅 <small>Year: {year if year > 0 else 'N/A'}</small></div>
+                        <div style="text-align: left; width: 100%; margin-top: 6px;">{badge_html}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                btn_col1, btn_col2 = st.columns([5, 3])
+                with btn_col1:
+                    if st.button("📖 Open", key=f"det_{prefix}_{isbn}_{index}", use_container_width=True):
+                        st.session_state.selected_isbn = isbn
                         st.rerun()
-        else:
-            st.warning("Please populate the data container target with character arrays.")
-            
-    render_output_dashboard(st.session_state.get("model_used"))
+                with btn_col2:
+                    if st.button(fav_icon, key=f"save_{prefix}_{isbn}_{index}", use_container_width=True):
+                        # Force structural conversion if it ever corrupts dynamically
+                        if not isinstance(st.session_state.reading_list, set):
+                            st.session_state.reading_list = set(st.session_state.reading_list)
+                            
+                        if not is_saved:
+                            st.session_state.reading_list.add(isbn)
+                            st.toast(f"Added to favorites!", icon="❤️")
+                        else:
+                            st.session_state.reading_list.remove(isbn)
+                            st.toast("Removed from favorites.", icon="🗑️")
+                        st.rerun()
+    except Exception as e:
+        show_witty_error(e, feature_context=f"Grid Showcase Layout ({prefix})")
 
 # ---------------------------
-# Main Shell Framework
+# Individual Detailed View Screen
 # ---------------------------
-def main():
-    api_key, api_err = read_api_key()
+def display_book_details_view(isbn):
+    try:
+        if st.button("← Back to Marketplace Home", use_container_width=True):
+            st.session_state.selected_isbn = None
+            st.rerun()
+            
+        if isbn in BOOK_LOOKUP:
+            book = BOOK_LOOKUP[isbn]
+            st.markdown("<br>", unsafe_allow_html=True)
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                st.image(book['image_url'], use_container_width=True)
+            with col2:
+                st.title(book['book_title'])
+                st.markdown(f"### By **{book['book_author']}**")
+                
+                st.markdown(f"""
+                <div class="info-container">
+                    <div class="info-label">Publisher</div>
+                    <div class="info-value">{book['publisher']}</div>
+                </div>
+                <div class="info-container">
+                    <div class="info-label">Publication Year</div>
+                    <div class="info-value">{book['year_of_publication']}</div>
+                </div>
+                <div class="info-container" style="border-left: 4px solid {CONFIG['success_color']};">
+                    <div class="info-label" style="color: {CONFIG['success_color']};">Availability</div>
+                    <div class="info-value" style="color: #FFF;">In Stock <span style="font-size:13px; color:#9CA3AF;">(Dispatches within 24 hours)</span></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown("---")
+            st.subheader("✨ Readers Who Bought This Also Enjoyed")
+            similar_isbns = get_similar_books_fast(isbn)
+            if similar_isbns:
+                display_book_cards_grid(get_book_details_fast(similar_isbns), prefix="similar")
+            else:
+                st.caption("No matches found.")
+    except Exception as e:
+        show_witty_error(e, feature_context="Item Detailed Description Stage")
+
+# ---------------------------
+# Sidebar Frame With Fixed Bottom Dynamic Profiles
+# ---------------------------
+with st.sidebar:
+    st.markdown("<h2 style='color:#FFF; margin-bottom:0;'>📚 NovelNexus</h2>", unsafe_allow_html=True)
+    st.caption("Your Premium AI Bookstore")
+    st.markdown("---")
     
-    with st.sidebar:
-        st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
-        st.caption("Deep-Thinking Universal Core Engine")
-        st.markdown("---")
-        
-        st.markdown("### Pipeline Portals")
-        if st.button("🌐 Live Domain URL Pipeline", use_container_width=True):
-            st.session_state.selected_page = "URL"
-            st.session_state.last_summary = None
-            st.rerun()
-        if st.button("📝 Raw Text Block Parser", use_container_width=True):
-            st.session_state.selected_page = "TEXT"
-            st.session_state.last_summary = None
-            st.rerun()
-            
-        # Highly Interactive Styled Live Telemetry Metric Container Block Box
-        st.markdown("---")
-        st.markdown("### 📊 Active Token Counters")
-        st.markdown(f"""
-        <div class="token-container">
-            <div class="token-row"><span>Input Tokens Used</span> <span>{st.session_state.token_metrics["input"]}</span></div>
-            <div class="token-row"><span>Output Tokens Used</span> <span>{st.session_state.token_metrics["output"]}</span></div>
-            <div class="token-row"><span>Billed Token Volume</span> <span>{st.session_state.token_metrics["total"]}</span></div>
+    # Render count safely regardless of object state types
+    saved_count = len(st.session_state.reading_list) if isinstance(st.session_state.reading_list, (set, list)) else 0
+    st.metric(label="Active Session Saved Items", value=saved_count)
+    
+    st.markdown("---")
+    st.title("👨‍💻 About the Author")
+    st.caption("Tanvir Anzum – AI & Data Researcher")
+    st.markdown("""
+        <div style='font-size: 14px; font-weight: normal;'>
+        Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
         </div>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <div style='font-size: 14px; font-weight: normal;'>
+        <br>
+        <a href="https://www.linkedin.com/in/aanzum" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="16" style="vertical-align:middle; margin-right:6px;">
+            <strong>LinkedIn</strong>
+        </a>
+        &nbsp;&nbsp;
+        <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="16" style="vertical-align:middle; margin-right:6px;">
+            <strong>Research</strong>
+        </a>
+        </div>
+    """, unsafe_allow_html=True)
+    st.markdown("---")
+
+# ---------------------------
+# Main Routing Logic
+# ---------------------------
+if st.session_state.selected_isbn:
+    display_book_details_view(st.session_state.selected_isbn)
+else:
+    st.title("📚 Discovery Marketplace")
+    
+    h_col1, h_col2 = st.columns([3, 1])
+    with h_col1:
+        global_search = st.text_input("🔍 Search entire catalog...", placeholder="Type title, author or keywords to dynamically filter shelves below...")
+    with h_col2:
+        user_ids = user_info['user_id'].unique() if 'user_id' in user_info.columns else [1001]
+        user_id = st.selectbox("🎯 Active Personalization Profile:", user_ids)
+        
+    # Guard against completely corrupted/empty data indices
+    if 'user_id' in user_info.columns and not user_info[user_info['user_id'] == user_id].empty:
+        user_row = user_info[user_info['user_id'] == user_id].iloc[0]
+    else:
+        user_row = pd.Series({'collaborative_cluster_recommendation': "[]", 'demographic_recommendation': "[]", 'geographic_recommendation': "[]"})
+        
+    st.markdown("---")
+    
+    tab_all, tab1, tab2, tab3, tab_saved = st.tabs([
+        "📚 All Books", 
+        "🤝 Handpicked For You", 
+        "👥 Popular Among Peers", 
+        "📍 Trending In Your Area",
+        f"❤️ My Favorites ({saved_count})"
+    ])
+    
+    # 1. CATEGORY VIEW FIRST
+    with tab_all:
+        st.markdown("### Browse Categories")
+        st.markdown("#### ⏳ Vintage Classics (Published Before 2000)")
+        vintage_books = book_data[book_data['year_of_publication'] < 2000] if 'year_of_publication' in book_data.columns else book_data
+        display_book_cards_grid(vintage_books[:10], prefix="all_vintage", search_term=global_search)
         
         st.markdown("---")
-        st.title("👨‍💻 About the Author")
-        st.caption("Tanvir Anzum – AI & Data Researcher")
-        st.markdown("""
-            <div style='font-size: 14px; font-weight: normal; color:#9CA3AF;'>
-            Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("#### ✨ Modern Era Hits (Published 2000 & Later)")
+        modern_books = book_data[book_data['year_of_publication'] >= 2000] if 'year_of_publication' in book_data.columns else book_data
+        display_book_cards_grid(modern_books[:10], prefix="all_modern", search_term=global_search)
+        
+    # 2. PERSONALIZED RECOMMENDATIONS
+    with tab1:
+        st.markdown("### Handpicked For You")
+        collab_ids = convert_to_list(user_row.get('collaborative_cluster_recommendation', "[]"))[:10]
+        display_book_cards_grid(get_book_details_fast(collab_ids), prefix="curated", search_term=global_search)
+        
+    with tab2:
+        st.markdown("### Peer Demographic Trends")
+        demo_ids = convert_to_list(user_row.get('demographic_recommendation', "[]"))[:10]
+        display_book_cards_grid(get_book_details_fast(demo_ids), prefix="demographic", search_term=global_search)
+        
+    with tab3:
+        st.markdown("### Regional Best Sellers")
+        geo_ids = convert_to_list(user_row.get('geographic_recommendation', "[]"))[:10]
+        display_book_cards_grid(get_book_details_fast(geo_ids), prefix="geographic", search_term=global_search)
 
-        st.markdown("""
-            <div style='font-size: 14px; font-weight: normal;'>
-            <br>
-            <a href="https://www.linkedin.com/in/aanzum" target="_blank" style="color:#4F46E5; text-decoration:none;">
-                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" style="vertical-align:middle; margin-right:4px;">
-                <strong>LinkedIn</strong>
-            </a>
-            &nbsp;&nbsp;&nbsp;
-            <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" style="color:#4F46E5; text-decoration:none;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="14" style="vertical-align:middle; margin-right:4px;">
-                <strong>Research</strong>
-            </a>
-            </div>
-        """, unsafe_allow_html=True)
-        st.markdown("---")
-
-    if api_err:
-        st.error(api_err)
-        return
-
-    if st.session_state.selected_page == "URL":
-        render_url_workspace(api_key)
-    else:
-        render_text_workspace(api_key)
-
-if __name__ == "__main__":
-    main()
+    # 3. SAVED USER REPOSITORY
+    with tab_saved:
+        st.markdown("### Your Favorites Vault")
+        if st.session_state.reading_list:
+            if st.button("🗑️ Clear Entire List", use_container_width=True):
+                st.session_state.reading_list.clear()
+                st.rerun()
+            saved_books = get_book_details_fast(list(st.session_state.reading_list))
+            display_book_cards_grid(saved_books, prefix="vault")
+        else:
+            st.info("Your favorites vault is empty.")
