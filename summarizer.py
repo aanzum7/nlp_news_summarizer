@@ -13,8 +13,6 @@ import re
 st.set_page_config(page_title="InsightInMinutes | Pro News Dashboard", page_icon="🔎", layout="wide")
 
 # Initialize Session States
-if "selected_page" not in st.session_state:
-    st.session_state.selected_page = "URL"
 if "last_summary" not in st.session_state:
     st.session_state.last_summary = None
 if "headline" not in st.session_state:
@@ -309,7 +307,6 @@ def execute_summary(content, api_key, min_limit, max_limit):
 # ---------------------------
 def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
-        # 📰 Reverted Classic Layout Box (Headline + Summary grouped in one card)
         st.markdown(f"""
         <div class="summary-section">
             <h3>📰 {st.session_state.headline}</h3>
@@ -321,120 +318,6 @@ def render_output_dashboard(model_used=None):
             st.caption(f"⚡ Engine Allocation Telemetry: Processed via free cluster `{model_used}` node.")
 
 # ---------------------------
-# Base Route Workspace Views
-# ---------------------------
-def render_url_workspace(api_key):
-    st.subheader("🌐 Universal URL Pipeline")
-    
-    url = st.text_input("Target Article Link:", key="url_input_box", placeholder="Paste any live media network link or resource page here...")
-    
-    with st.expander("🛠️ Advanced Extraction Configurations"):
-        custom_class = st.text_input("Explicit Content CSS Selector Override (Optional):", placeholder="e.g. article-body-text-class")
-        
-    min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120))
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    b_col1, b_col2 = st.columns([4, 1])
-    with b_col1:
-        process_clicked = st.button("🚀 Process Domain Insights", use_container_width=True)
-    with b_col2:
-        if st.button("🗑️ Clear", use_container_width=True, key="clear_url_action"):
-            st.session_state.headline = None
-            st.session_state.last_summary = None
-            st.session_state.model_used = None
-            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-            st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
-            st.rerun()
-
-    if process_clicked:
-        if url.strip():
-            cache_key = f"url_{url.strip()}_{min_limit}_{max_limit}"
-            if cache_key in st.session_state.cache_vault:
-                cached_data = st.session_state.cache_vault[cache_key]
-                st.session_state.headline = cached_data["headline"]
-                st.session_state.last_summary = cached_data["summary"]
-                st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
-                st.toast("Retrieved instantly from session cache!", icon="💾")
-            else:
-                with st.spinner("Extracting web payload components & generating insight layout..."):
-                    content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
-                    if scrap_err:
-                        st.error(scrap_err)
-                    elif content:
-                        hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
-                        if ai_err:
-                            st.markdown("""
-                            <div class="terminal-card">
-                                🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
-                                <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
-                                <i>"Whoops! All free models are currently catching their breath at a highway diner. 
-                                Let's give the parameters a moment to cycle before running again."</i>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        else:
-                            st.session_state.headline = hd
-                            st.session_state.last_summary = sm
-                            st.session_state.model_used = active_model
-                            st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
-                            st.toast("Insights processing complete!", icon="✅")
-                            st.rerun()
-        else:
-            st.warning("Please supply a valid location URL link pointer.")
-            
-    render_output_dashboard(st.session_state.get("model_used"))
-
-def render_text_workspace(api_key):
-    st.subheader("📝 Textual Matrix Pipeline")
-    
-    raw_text = st.text_area("Source Text Dropzone Block:", key="text_input_box", height=250, placeholder="Paste your text here...")
-    min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120))
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    b_col1, b_col2 = st.columns([4, 1])
-    with b_col1:
-        process_clicked = st.button("🚀 Synthesize Textual Blocks", use_container_width=True)
-    with b_col2:
-        if st.button("🗑️ Clear", use_container_width=True, key="clear_text_action"):
-            st.session_state.headline = None
-            st.session_state.last_summary = None
-            st.session_state.model_used = None
-            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-            st.rerun()
-
-    if process_clicked:
-        if raw_text.strip():
-            cache_key = f"text_{hash(raw_text.strip())}_{min_limit}_{max_limit}"
-            if cache_key in st.session_state.cache_vault:
-                cached_data = st.session_state.cache_vault[cache_key]
-                st.session_state.headline = cached_data["headline"]
-                st.session_state.last_summary = cached_data["summary"]
-                st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
-                st.toast("Retrieved instantly from session cache!", icon="💾")
-            else:
-                with st.spinner("Executing sequence processing logic across inputs..."):
-                    hd, sm, active_model, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
-                    if ai_err:
-                        st.markdown("""
-                        <div class="terminal-card">
-                            🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
-                            <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
-                            <i>"Whoops! All free models are currently catching their breath at a highway diner. 
-                            Let's give the parameters a moment to cycle before running again."</i>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.session_state.headline = hd
-                        st.session_state.last_summary = sm
-                        st.session_state.model_used = active_model
-                        st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
-                        st.toast("Synthesis processing complete!", icon="✅")
-                        st.rerun()
-        else:
-            st.warning("Please populate the data container target with character arrays.")
-            
-    render_output_dashboard(st.session_state.get("model_used"))
-
-# ---------------------------
 # Main Shell Framework
 # ---------------------------
 def main():
@@ -443,18 +326,8 @@ def main():
     with st.sidebar:
         st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
         st.caption("Deep-Thinking Universal Core Engine")
-        st.markdown("---")
         
-        st.markdown("### Pipeline Portals")
-        if st.button("🌐 Live Domain URL Pipeline", use_container_width=True):
-            st.session_state.selected_page = "URL"
-            st.session_state.last_summary = None
-            st.rerun()
-        if st.button("📝 Raw Text Block Parser", use_container_width=True):
-            st.session_state.selected_page = "TEXT"
-            st.session_state.last_summary = None
-            st.rerun()
-            
+        # 📊 Active Token Counters Progress Container
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
         
@@ -514,10 +387,119 @@ def main():
         st.error(api_err)
         return
 
-    if st.session_state.selected_page == "URL":
-        render_url_workspace(api_key)
-    else:
-        render_text_workspace(api_key)
+    # 🌐 NEW TOP-LEVEL PIPELINE TAB BAR LAYOUT STACK
+    tab_url, tab_text = st.tabs(["🌐 Live Domain URL Pipeline", "📝 Raw Text Block Parser"])
+
+    # --- 1. URL WORKSPACE ---
+    with tab_url:
+        st.subheader("Universal URL Processing")
+        url = st.text_input("Target Article Link:", key="url_input_box", placeholder="Paste any live media network link or resource page here...")
+        
+        with st.expander("🛠️ Advanced Extraction Configurations"):
+            custom_class = st.text_input("Explicit Content CSS Selector Override (Optional):", placeholder="e.g. article-body-text-class")
+            
+        min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120), key="url_slider")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        b_col1, b_col2 = st.columns([4, 1])
+        with b_col1:
+            process_url = st.button("🚀 Process Domain Insights", use_container_width=True, key="url_run_btn")
+        with b_col2:
+            if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_url_action"):
+                st.session_state.headline = None
+                st.session_state.last_summary = None
+                st.session_state.model_used = None
+                st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
+                st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
+                st.rerun()
+
+        if process_url:
+            if url.strip():
+                cache_key = f"url_{url.strip()}_{min_limit}_{max_limit}"
+                if cache_key in st.session_state.cache_vault:
+                    cached_data = st.session_state.cache_vault[cache_key]
+                    st.session_state.headline = cached_data["headline"]
+                    st.session_state.last_summary = cached_data["summary"]
+                    st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
+                    st.toast("Retrieved instantly from session cache!", icon="💾")
+                else:
+                    with st.spinner("Extracting web components & generating summary..."):
+                        content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
+                        if scrap_err:
+                            st.error(scrap_err)
+                        elif content:
+                            hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
+                            if ai_err:
+                                st.markdown("""
+                                <div class="terminal-card">
+                                    🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
+                                    <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
+                                    <i>"Whoops! All free models are currently catching their breath at a highway diner."</i>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.session_state.headline = hd
+                                st.session_state.last_summary = sm
+                                st.session_state.model_used = active_model
+                                st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
+                                st.toast("Insights processing complete!", icon="✅")
+                                st.rerun()
+            else:
+                st.warning("Please supply a valid location URL link pointer.")
+                
+        if st.get_option("client.showErrorDetails") or st.session_state.last_summary:
+            render_output_dashboard(st.session_state.get("model_used"))
+
+    # --- 2. TEXT WORKSPACE ---
+    with tab_text:
+        st.subheader("Textual Matrix Processing")
+        raw_text = st.text_area("Source Text Dropzone Block:", key="text_input_box", height=250, placeholder="Paste your text here...")
+        min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120), key="text_slider")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        b_col1, b_col2 = st.columns([4, 1])
+        with b_col1:
+            process_text = st.button("🚀 Synthesize Textual Blocks", use_container_width=True, key="text_run_btn")
+        with b_col2:
+            if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_text_action"):
+                st.session_state.headline = None
+                st.session_state.last_summary = None
+                st.session_state.model_used = None
+                st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
+                st.rerun()
+
+        if process_text:
+            if raw_text.strip():
+                cache_key = f"text_{hash(raw_text.strip())}_{min_limit}_{max_limit}"
+                if cache_key in st.session_state.cache_vault:
+                    cached_data = st.session_state.cache_vault[cache_key]
+                    st.session_state.headline = cached_data["headline"]
+                    st.session_state.last_summary = cached_data["summary"]
+                    st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
+                    st.toast("Retrieved instantly from session cache!", icon="💾")
+                else:
+                    with st.spinner("Executing sequence processing logic..."):
+                        hd, sm, active_model, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
+                        if ai_err:
+                            st.markdown("""
+                            <div class="terminal-card">
+                                🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
+                                <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
+                                <i>"Whoops! All free models are currently catching their breath at a highway diner."</i>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.session_state.headline = hd
+                            st.session_state.last_summary = sm
+                            st.session_state.model_used = active_model
+                            st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
+                            st.toast("Synthesis processing complete!", icon="✅")
+                            st.rerun()
+            else:
+                st.warning("Please populate the data container target with character arrays.")
+                
+        if st.get_option("client.showErrorDetails") or st.session_state.last_summary:
+            render_output_dashboard(st.session_state.get("model_used"))
 
 if __name__ == "__main__":
     main()
