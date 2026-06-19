@@ -306,9 +306,7 @@ def render_output_dashboard(model_used=None):
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("### 📄 Analytical Synthesis Summary")
-        
-        # Rendering output inside our customized colorful summary box layout
+        # 🎨 Colorful Summary Box Display Wrapper (Standalone Headline style removed)
         st.markdown(f"""
         <div class="colorful-summary-box">
             <p>{st.session_state.last_summary}</p>
