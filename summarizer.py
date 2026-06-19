@@ -37,6 +37,9 @@ THEME = {
     "card_border": "#2D3139",            # Modern Gray Trim
     "text_color": "#E1E4EA",             # Clean Off-White
     "accent_color": "#4F46E5",           # Electric Indigo
+    "classic_summary_bg": "#fffdfa",     # Classic creamy box from original theme
+    "classic_summary_border": "#c7b78b", # Antique brown border from original theme
+    "classic_text_color": "#0d0d0d",     # High contrast dark text for clarity
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
@@ -55,6 +58,23 @@ st.markdown(f"""
         padding: 24px;
         margin-bottom: 15px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }}
+
+    /* Reverted Classic Summary Box Layout Style */
+    .summary-section {{
+        padding: 18px;
+        border: 1px solid {THEME['classic_summary_border']};
+        background-color: {THEME['classic_summary_bg']};
+        border-radius: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        color: {THEME['classic_text_color']};
+        box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
+    }}
+    .summary-section p {{
+        color: {THEME['classic_text_color']} !important;
+        font-size: 15px;
+        line-height: 1.6;
     }}
     
     /* Interactive Dashboard Metrics Box with Color Progress Bars */
@@ -269,6 +289,7 @@ def execute_summary(content, api_key, min_limit, max_limit):
 # ---------------------------
 def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
+        # 📰 Headline Showcase Panel (Styled Dark Panel)
         st.markdown(f"""
         <div class="news-card" style="border-left: 5px solid {THEME['accent_color']};">
             <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:{THEME['accent_color']}; tracking-spacing:0.05em;">Generated Flash Headline</span>
@@ -276,10 +297,17 @@ def render_output_dashboard(model_used=None):
         </div>
         """, unsafe_allow_html=True)
         
-        # Premium Native Clipboard Copy Shell Component
+        # 📄 Previous Classic Layout Style Wrapper with Copy Interface Utility (Headline Removed from string)
         st.markdown("### 📄 Analytical Synthesis Summary")
-        full_markdown_payload = f"📌 {st.session_state.headline}\n\n{st.session_state.last_summary}"
-        st.code(full_markdown_payload, language="markdown", wrap_lines=True)
+        
+        st.markdown(f"""
+        <div class="summary-section">
+            <p>{st.session_state.last_summary}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Native Click-to-copy text container parsing ONLY the summary text block asset
+        st.code(st.session_state.last_summary, language="markdown", wrap_lines=True)
         
         # Actions Row
         current_id = st.session_state.headline
@@ -443,7 +471,6 @@ def main():
         input_pct = (st.session_state.token_metrics["input"] / total_volume * 100) if total_volume > 0 else 0
         output_pct = (st.session_state.token_metrics["output"] / total_volume * 100) if total_volume > 0 else 0
         
-        # Fixed: Passed into dedicated sidebar renderer context block
         st.sidebar.markdown(f"""
         <div class="token-container">
             <div class="progress-bar-wrapper">
