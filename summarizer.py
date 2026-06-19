@@ -8,7 +8,7 @@ import langdetect
 import re
 
 # ---------------------------
-# ✅ Page Config (Strictly First)
+# ✅ Page Config (Must be First)
 # ---------------------------
 st.set_page_config(page_title="InsightInMinutes | Pro News Dashboard", page_icon="🔎", layout="wide")
 
@@ -42,7 +42,6 @@ st.markdown(f"""
         color: {THEME['text_color']};
     }}
     
-    /* Panel Cards */
     .news-card {{
         background: {THEME['card_bg']};
         border: 1px solid {THEME['card_border']};
@@ -52,27 +51,31 @@ st.markdown(f"""
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     }}
     
-    /* Typography Overrides */
     h1, h2, h3, h4, h5 {{
         font-weight: 700;
         color: #FFFFFF;
     }}
     
-    /* Inputs */
     .stTextArea textarea, .stTextInput>div>input {{
         background-color: {THEME['card_bg']} !important;
         border: 1px solid {THEME['card_border']} !important;
         border-radius: 8px !important;
         color: {THEME['text_color']} !important;
     }}
-    .stTextArea textarea:focus, .stTextInput>div>input:focus {{
-        border-color: {THEME['accent_color']} !important;
-    }}
     
-    /* Sidebar Layout Fixes */
     [data-testid="stSidebar"] {{
         background-color: #111318 !important;
         border-right: 1px solid {THEME['card_border']};
+    }}
+
+    .terminal-card {{
+        background: #1E1E24;
+        border-left: 4px solid #EF4444;
+        padding: 15px;
+        border-radius: 6px;
+        font-family: monospace;
+        color: #F87171;
+        margin: 15px 0;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -96,7 +99,6 @@ def extract_universal_content(url, custom_class=None):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Scenario 1: Custom Explicit Override CSS target rule provided by user
         if custom_class:
             paragraphs = []
             for div in soup.find_all(class_=custom_class):
@@ -104,7 +106,6 @@ def extract_universal_content(url, custom_class=None):
             if paragraphs:
                 return "\n".join(paragraphs), None
                 
-        # Scenario 2: Semi-automated known media signatures match
         patterns = {
             "prothomalo\\.com": ["story-element-text"],
             "thedailystar\\.net": ["pb-20", "clearfix"],
@@ -121,8 +122,6 @@ def extract_universal_content(url, custom_class=None):
                 if paragraphs:
                     return "\n".join(paragraphs), None
 
-        # Scenario 3: Deep fallback heuristic (Universal Parser)
-        # Drops typical boilerplate navigation clusters to map readable prose blocks on any URL link.
         for element in soup(["nav", "footer", "header", "script", "style", "aside", "form"]):
             element.decompose()
             
@@ -130,7 +129,6 @@ def extract_universal_content(url, custom_class=None):
         combined = "\n".join(paragraphs)
         
         if len(combined.split()) < 40:
-            # Drop constraint checks to capture raw textual nodes safely if layout contains few paragraphs
             combined = soup.get_text(separator="\n", strip=True)
             
         return combined, None
@@ -138,7 +136,7 @@ def extract_universal_content(url, custom_class=None):
         return None, f"Scraping Failure: {str(e)}"
 
 # ---------------------------
-# GenAI Processing Core
+# Resilient Cascade Fallback Inference Core
 # ---------------------------
 def execute_summary(content, api_key, min_limit, max_limit):
     try:
@@ -146,53 +144,76 @@ def execute_summary(content, api_key, min_limit, max_limit):
     except Exception:
         detected_lang = "en"
         
-    try:
-        # Initialize the updated google-genai Client structure
-        client = genai.Client(api_key=api_key)
-        
-        prompt = (
-            f"Analyze the following textual corpus. Generate a short, informative headline "
-            f"followed by a clean structured news summary within {min_limit} to {max_limit} words. "
-            f"Crucial rule: Write entirely inside the {detected_lang} language space. "
-            f"Format response explicitly with 'HEADLINE:' and 'SUMMARY:' prefixes to ensure proper parsing.\n\n"
-            f"Corpus Content:\n{content}"
-        )
-        
-        generate_config = types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_level="HIGH"),
-            tools=[types.Tool(googleSearch=types.GoogleSearch())]
-        )
-        
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=generate_config
-        )
-        
-        if response and response.text:
-            raw_text = response.text.strip()
-            # Parsed structural extraction metrics block
-            headline = "Market Insights Update"
-            summary_body = raw_text
-            
-            if "HEADLINE:" in raw_text and "SUMMARY:" in raw_text:
-                parts = raw_text.split("SUMMARY:")
-                headline = parts[0].replace("HEADLINE:", "").strip()
-                summary_body = parts[1].strip()
-            elif "\n" in raw_text:
-                split_lines = [l for l in raw_text.splitlines() if l.strip()]
-                headline = split_lines[0]
-                summary_body = "\n".join(split_lines[1:])
+    client = genai.Client(api_key=api_key)
+    
+    prompt = (
+        f"Analyze the following textual corpus. Generate a short, informative headline "
+        f"followed by a clean structured news summary within {min_limit} to {max_limit} words. "
+        f"Crucial rule: Write entirely inside the {detected_lang} language space. "
+        f"Format response explicitly with 'HEADLINE:' and 'SUMMARY:' prefixes to ensure proper parsing.\n\n"
+        f"Corpus Content:\n{content}"
+    )
+
+    # All free-tier accessible models listed in priority sequence order
+    model_cascade_pool = [
+        {"name": "gemini-2.5-flash", "supports_thinking": False},
+        {"name": "gemini-2.5-flash-lite", "supports_thinking": False},
+        {"name": "gemini-2.0-flash", "supports_thinking": False},
+        {"name": "gemini-3-flash-preview", "supports_thinking": True}
+    ]
+    
+    collected_errors = []
+    
+    for model_meta in model_cascade_pool:
+        current_model = model_meta["name"]
+        try:
+            # Build configuration adjustments on the fly based on target capabilities
+            if model_meta["supports_thinking"]:
+                generate_config = types.GenerateContentConfig(
+                    thinking_config=types.ThinkingConfig(thinking_level="HIGH"),
+                    tools=[types.Tool(googleSearch=types.GoogleSearch())]
+                )
+            else:
+                generate_config = types.GenerateContentConfig(
+                    tools=[types.Tool(googleSearch=types.GoogleSearch())]
+                )
                 
-            return headline, summary_body, None
-        return None, None, "No output delivered from inference nodes."
-    except Exception as e:
-        return None, None, f"AI Processing Error: {str(e)}"
+            response = client.models.generate_content(
+                model=current_model,
+                contents=prompt,
+                config=generate_config
+            )
+            
+            if response and response.text:
+                raw_text = response.text.strip()
+                headline = "Market Insights Update"
+                summary_body = raw_text
+                
+                if "HEADLINE:" in raw_text and "SUMMARY:" in raw_text:
+                    parts = raw_text.split("SUMMARY:")
+                    headline = parts[0].replace("HEADLINE:", "").strip()
+                    summary_body = parts[1].strip()
+                elif "\n" in raw_text:
+                    split_lines = [l for l in raw_text.splitlines() if l.strip()]
+                    headline = split_lines[0]
+                    summary_body = "\n".join(split_lines[1:])
+                    
+                return headline, summary_body, current_model, None
+                
+        except Exception as e:
+            err_str = str(e)
+            collected_errors.append(f"{current_model}: {err_str}")
+            # Continue dropping immediately down to the next fallback node item sequence
+            continue
+            
+    # If the app drops entirely out of the fallback array, return the custom error logs
+    combined_log = " | ".join(collected_errors)
+    return None, None, None, f"Cascade Exhausted. Log: {combined_log}"
 
 # ---------------------------
 # UI Presentation Layer
 # ---------------------------
-def render_output_dashboard():
+def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
         st.markdown(f"""
         <div class="news-card" style="border-left: 5px solid {THEME['accent_color']};">
@@ -204,9 +225,12 @@ def render_output_dashboard():
             <p style="margin-top:8px; line-height:1.7; font-size:15px; color:{THEME['text_color']};">{st.session_state.last_summary}</p>
         </div>
         """, unsafe_allow_html=True)
+        
+        if model_used:
+            st.caption(f"⚡ Engine Allocation Telemetry: Processed via free cluster `{model_used}` node.")
 
 # ---------------------------
-# Base Route Views
+# Base Route Workspace Views
 # ---------------------------
 def render_url_workspace(api_key):
     st.subheader("🌐 Universal URL Pipeline")
@@ -225,17 +249,25 @@ def render_url_workspace(api_key):
                 if scrap_err:
                     st.error(scrap_err)
                 elif content:
-                    hd, sm, ai_err = execute_summary(content, api_key, min_limit, max_limit)
+                    hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
                     if ai_err:
-                        st.error(ai_err)
+                        st.markdown(f"""
+                        <div class="terminal-card">
+                            🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
+                            <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
+                            <i>"Whoops! All free models are currently catching their breath at a highway diner. 
+                            Let's give the parameters a moment to cycle before running again."</i>
+                        </div>
+                        """, unsafe_allow_html=True)
                     else:
                         st.session_state.headline = hd
                         st.session_state.last_summary = sm
+                        st.session_state.model_used = active_model
                         st.toast("Insights processing complete!", icon="✅")
         else:
             st.warning("Please supply a valid location URL link pointer.")
             
-    render_output_dashboard()
+    render_output_dashboard(st.session_state.get("model_used"))
 
 def render_text_workspace(api_key):
     st.subheader("📝 Textual Matrix Pipeline")
@@ -246,17 +278,25 @@ def render_text_workspace(api_key):
     if st.button("🚀 Synthesize Textual Blocks", use_container_width=True):
         if raw_text.strip():
             with st.spinner("Executing sequence processing logic across inputs..."):
-                hd, sm, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
+                hd, sm, active_model, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
                 if ai_err:
-                    st.error(ai_err)
+                    st.markdown(f"""
+                    <div class="terminal-card">
+                        🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
+                        <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
+                        <i>"Whoops! All free models are currently catching their breath at a highway diner. 
+                        Let's give the parameters a moment to cycle before running again."</i>
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
                     st.session_state.headline = hd
                     st.session_state.last_summary = sm
+                    st.session_state.model_used = active_model
                     st.toast("Synthesis processing complete!", icon="✅")
         else:
             st.warning("Please populate the data container target with character arrays.")
             
-    render_output_dashboard()
+    render_output_dashboard(st.session_state.get("model_used"))
 
 # ---------------------------
 # Main Shell Framework
@@ -269,7 +309,6 @@ def main():
         st.caption("Deep-Thinking Universal Core Engine")
         st.markdown("---")
         
-        # Navigation Interface Block Actions
         st.markdown("### Pipeline Portals")
         if st.button("🌐 Live Domain URL Pipeline", use_container_width=True):
             st.session_state.selected_page = "URL"
@@ -309,7 +348,6 @@ def main():
         st.error(api_err)
         return
 
-    # Workspace Portal Routers
     if st.session_state.selected_page == "URL":
         render_url_workspace(api_key)
     else:
