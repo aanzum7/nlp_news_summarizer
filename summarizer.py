@@ -19,6 +19,14 @@ if "last_summary" not in st.session_state:
     st.session_state.last_summary = None
 if "headline" not in st.session_state:
     st.session_state.headline = None
+if "model_used" not in st.session_state:
+    st.session_state.model_used = None
+
+# Input reset key structures to force field clear overrides
+if "url_input_value" not in st.session_state:
+    st.session_state.url_input_value = ""
+if "text_input_value" not in st.session_state:
+    st.session_state.text_input_value = ""
 
 # ---------------------------
 # 🎨 PREMIUM THEME CONFIGURATION
@@ -154,7 +162,6 @@ def execute_summary(content, api_key, min_limit, max_limit):
         f"Corpus Content:\n{content}"
     )
 
-    # All free-tier accessible models listed in priority sequence order
     model_cascade_pool = [
         {"name": "gemini-2.5-flash", "supports_thinking": False},
         {"name": "gemini-2.5-flash-lite", "supports_thinking": False},
@@ -167,7 +174,6 @@ def execute_summary(content, api_key, min_limit, max_limit):
     for model_meta in model_cascade_pool:
         current_model = model_meta["name"]
         try:
-            # Build configuration adjustments on the fly based on target capabilities
             if model_meta["supports_thinking"]:
                 generate_config = types.GenerateContentConfig(
                     thinking_config=types.ThinkingConfig(thinking_level="HIGH"),
@@ -201,12 +207,9 @@ def execute_summary(content, api_key, min_limit, max_limit):
                 return headline, summary_body, current_model, None
                 
         except Exception as e:
-            err_str = str(e)
-            collected_errors.append(f"{current_model}: {err_str}")
-            # Continue dropping immediately down to the next fallback node item sequence
+            collected_errors.append(f"{current_model}: {str(e)}")
             continue
             
-    # If the app drops entirely out of the fallback array, return the custom error logs
     combined_log = " | ".join(collected_errors)
     return None, None, None, f"Cascade Exhausted. Log: {combined_log}"
 
@@ -234,7 +237,9 @@ def render_output_dashboard(model_used=None):
 # ---------------------------
 def render_url_workspace(api_key):
     st.subheader("🌐 Universal URL Pipeline")
-    url = st.text_input("Target Article Link:", placeholder="Paste any live media network link or resource page here...")
+    
+    # Controlled assignment value tracking
+    url = st.text_input("Target Article Link:", value=st.session_state.url_input_value, placeholder="Paste any live media network link or resource page here...")
     
     with st.expander("🛠️ Advanced Extraction Configurations"):
         custom_class = st.text_input("Explicit Content CSS Selector Override (Optional):", placeholder="e.g. article-body-text-class")
@@ -242,7 +247,22 @@ def render_url_workspace(api_key):
     min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (60, 140))
     
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🚀 Process Domain Insights", use_container_width=True):
+    
+    # Split execution row actions
+    b_col1, b_col2 = st.columns([4, 1])
+    with b_col1:
+        process_clicked = st.button("🚀 Process Domain Insights", use_container_width=True)
+    with b_col2:
+        clear_clicked = st.button("🗑️ Clear", use_container_width=True, key="clear_url_action")
+        
+    if clear_clicked:
+        st.session_state.url_input_value = ""
+        st.session_state.headline = None
+        st.session_state.last_summary = None
+        st.session_state.model_used = None
+        st.rerun()
+
+    if process_clicked:
         if url.strip():
             with st.spinner("Extracting web payload components & generating insight layout..."):
                 content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
@@ -251,7 +271,7 @@ def render_url_workspace(api_key):
                 elif content:
                     hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
                     if ai_err:
-                        st.markdown(f"""
+                        st.markdown("""
                         <div class="terminal-card">
                             🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
                             <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
@@ -260,6 +280,7 @@ def render_url_workspace(api_key):
                         </div>
                         """, unsafe_allow_html=True)
                     else:
+                        st.session_state.url_input_value = url  # Keep active value
                         st.session_state.headline = hd
                         st.session_state.last_summary = sm
                         st.session_state.model_used = active_model
@@ -271,16 +292,31 @@ def render_url_workspace(api_key):
 
 def render_text_workspace(api_key):
     st.subheader("📝 Textual Matrix Pipeline")
-    raw_text = st.text_area("Source Text Dropzone Block:", height=250, placeholder="Paste your transcripts, documentation, raw field files or manuscript passages directly into this block area...")
+    
+    raw_text = st.text_area("Source Text Dropzone Block:", value=st.session_state.text_input_value, height=250, placeholder="Paste your transcripts, documentation, raw field files or manuscript passages directly into this block area...")
     min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (60, 140))
     
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🚀 Synthesize Textual Blocks", use_container_width=True):
+    
+    b_col1, b_col2 = st.columns([4, 1])
+    with b_col1:
+        process_clicked = st.button("🚀 Synthesize Textual Blocks", use_container_width=True)
+    with b_col2:
+        clear_clicked = st.button("🗑️ Clear", use_container_width=True, key="clear_text_action")
+        
+    if clear_clicked:
+        st.session_state.text_input_value = ""
+        st.session_state.headline = None
+        st.session_state.last_summary = None
+        st.session_state.model_used = None
+        st.rerun()
+
+    if process_clicked:
         if raw_text.strip():
             with st.spinner("Executing sequence processing logic across inputs..."):
                 hd, sm, active_model, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
                 if ai_err:
-                    st.markdown(f"""
+                    st.markdown("""
                     <div class="terminal-card">
                         🚨 <b>[AI Engine Outage Status: Roadtrip Pitstop]</b><br>
                         <span style="color:#A1A1AA;">Context: Cascade Fallback Pool Exhausted</span><br><br>
@@ -289,6 +325,7 @@ def render_text_workspace(api_key):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
+                    st.session_state.text_input_value = raw_text  # Keep active text
                     st.session_state.headline = hd
                     st.session_state.last_summary = sm
                     st.session_state.model_used = active_model
