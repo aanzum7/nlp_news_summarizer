@@ -505,8 +505,13 @@ def main():
     with tab_text:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
         raw_text = st.text_area("Pro Text Matrix Dropzone Area Block:", key="text_input_box", height=250, placeholder="Paste raw documentation passages, literature entries, or notes details directly inside this workspace area...")
-        min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 50, 400, (80, 180), key="text_slider")
-        
+        # Updated Slider Configurations inside render_url_workspace and render_text_workspace
+        min_limit, max_limit = st.slider(
+            "Synthesis Prose Word Boundaries:", 
+            40, 300, (75, 90), 
+            key="url_slider"  # and "text_slider" for the text tab
+        )
+                
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
             process_text = st.button("🚀 Synthesize Transcripts Passage", use_container_width=True, key="text_run_btn")
