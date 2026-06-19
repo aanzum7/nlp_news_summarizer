@@ -17,12 +17,6 @@ if "last_summary" not in st.session_state:
     st.session_state.last_summary = None
 if "headline" not in st.session_state:
     st.session_state.headline = None
-if "bullets" not in st.session_state:
-    st.session_state.bullets = []
-if "reading_time" not in st.session_state:
-    st.session_state.reading_time = 0
-if "sentiment" not in st.session_state:
-    st.session_state.sentiment = "Neutral"
 if "model_used" not in st.session_state:
     st.session_state.model_used = None
 if "token_metrics" not in st.session_state:
@@ -31,7 +25,7 @@ if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
 
 # ---------------------------
-# 🎨 PREMIUM REFINED DESIGN THEME
+# 🎨 PREMIUM THEME CONFIGURATION
 # ---------------------------
 THEME = {
     "background_color": "#0F1115",       # Rich Slate Dark
@@ -39,9 +33,7 @@ THEME = {
     "card_border": "#2D3139",            # Modern Gray Trim
     "text_color": "#E1E4EA",             # Clean Off-White
     "accent_color": "#4F46E5",           # Electric Indigo
-    "classic_summary_bg": "#FFFDF6",     # High-Contrast Paper White
-    "classic_summary_border": "#C5A880", # Premium Gold Asset Border
-    "classic_text_color": "#111111",     # Deep Typography Ink Gray
+    "summary_accent": "#10B981",          # Emerald Green Accent
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
@@ -57,77 +49,47 @@ st.markdown(f"""
         width: 100%;
         margin-bottom: 25px;
     }}
-
-    /* 📜 Classic Editorial Content Paper White Block Styles */
-    .summary-section {{
-        padding: 30px;
-        border: 1px solid {THEME['classic_summary_border']};
-        border-top: 6px solid {THEME['classic_summary_border']};
-        background-color: {THEME['classic_summary_bg']};
-        border-radius: 6px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-        color: {THEME['classic_text_color']};
-        box-shadow: 0 15px 35px -10px rgba(0,0,0,0.5);
-    }}
-    .summary-section h2 {{
-        color: #000000 !important;
-        font-family: 'Georgia', serif;
-        font-size: 28px;
-        font-weight: 800;
-        margin-top: 0;
+    
+    /* 🎨 Premium Output Cards matching image_1f44bc.png */
+    .headline-card-premium {{
+        background: {THEME['card_bg']};
+        border: 1px solid {THEME['card_border']};
+        border-left: 5px solid {THEME['accent_color']};
+        border-radius: 12px;
+        padding: 24px;
         margin-bottom: 15px;
-        text-align: left;
-        line-height: 1.3;
-    }}
-    .summary-section p {{
-        color: {THEME['classic_text_color']} !important;
-        font-size: 15.5px;
-        line-height: 1.7;
-        text-align: justify;
-        margin-bottom: 20px;
     }}
     
-    /* Meta Information Badges */
-    .meta-badge-container {{
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
+    .summary-card-premium {{
+        background: {THEME['card_bg']};
+        border: 1px solid {THEME['card_border']};
+        border-left: 5px solid {THEME['summary_accent']};
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 15px;
     }}
-    .meta-badge {{
-        background: rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-size: 12px;
+    
+    .badge-headline {{
+        font-size: 11px;
+        text-transform: uppercase;
         font-weight: 600;
-        text-transform: uppercase;
-        color: #444444;
+        color: {THEME['accent_color']};
+        letter-spacing: 0.05em;
+        display: block;
+        margin-bottom: 8px;
     }}
     
-    /* Bulleted Editorial Core Insights */
-    .takeout-header {{
-        font-size: 13px;
+    .badge-summary {{
+        font-size: 11px;
         text-transform: uppercase;
-        font-weight: 700;
-        color: #8B6E4E;
-        letter-spacing: 0.06em;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-        padding-bottom: 4px;
-    }}
-    .bullet-item {{
-        font-size: 14.5px;
-        margin: 8px 0;
-        display: flex;
-        gap: 8px;
-        align-items: flex-start;
-        color: #222222;
+        font-weight: 600;
+        color: {THEME['summary_accent']};
+        letter-spacing: 0.05em;
+        display: block;
+        margin-bottom: 8px;
     }}
     
-    /* Segmented Telemetry Inline Box Component styling */
+    /* Interactive Sidebar Metrics Box with Color Progress Bars */
     .token-container {{
         background: #111318;
         border: 1px solid {THEME['card_border']};
@@ -175,6 +137,11 @@ st.markdown(f"""
         font-weight: bold;
         color: #3B82F6;
         border-top: 1px solid #2D3139;
+    }}
+    
+    h1, h2, h3, h4, h5 {{
+        font-weight: 700;
+        color: #FFFFFF;
     }}
     
     .stTextArea textarea, .stTextInput>div>input {{
@@ -257,7 +224,7 @@ def extract_universal_content(url, custom_class=None):
         return None, f"Scraping Failure: {str(e)}"
 
 # ---------------------------
-# Advanced Editorial Engine Core
+# Resilient Cascade Fallback Inference Core
 # ---------------------------
 def execute_summary(content, api_key, min_limit, max_limit):
     try:
@@ -268,13 +235,10 @@ def execute_summary(content, api_key, min_limit, max_limit):
     client = genai.Client(api_key=api_key)
     
     prompt = (
-        f"You are an expert news desk editor. Summarize the content in the {detected_lang} language.\n"
-        f"Extract structural analytical elements according to the following constraints:\n"
-        f"1. Generate an impactful headline prefixed with 'HEADLINE:'.\n"
-        f"2. Extract exactly 3 clear summary takeaways prefixed with 'BULLETS:'. Separate each bullet point with a tilde (~).\n"
-        f"3. Classify article sentiment tone cleanly as Positive, Negative, or Neutral, prefixed with 'SENTIMENT:'.\n"
-        f"4. Write a dense prose summary essay between {min_limit} and {max_limit} words, prefixed with 'SUMMARY:'.\n\n"
-        f"Source Text Content:\n{content}"
+        f"Summarize the following text in the {detected_lang} language. "
+        f"Keep the response strictly short and dense between {min_limit} and {max_limit} words. "
+        f"Format explicitly with 'HEADLINE:' on line 1, followed by 'SUMMARY:' on line 2.\n\n"
+        f"Text:\n{content}"
     )
 
     model_cascade_pool = [
@@ -300,37 +264,25 @@ def execute_summary(content, api_key, min_limit, max_limit):
                 )
                 
             response = client.models.generate_content(
-                model=current_model, contents=prompt, config=generate_config
+                model=current_model,
+                contents=prompt,
+                config=generate_config
             )
             
             if response and response.text:
                 raw_text = response.text.strip()
-                
-                headline = "Insights Wire Brief"
+                headline = "Insights Update"
                 summary_body = raw_text
-                bullets = ["Core takeout analysis completed safely."]
-                sentiment = "Neutral"
                 
-                try:
-                    headline_match = re.search(r"HEADLINE:\s*(.*?)(?=\n[A-Z]+:|$)", raw_text, re.DOTALL)
-                    bullets_match = re.search(r"BULLETS:\s*(.*?)(?=\n[A-Z]+:|$)", raw_text, re.DOTALL)
-                    sentiment_match = re.search(r"SENTIMENT:\s*(.*?)(?=\n[A-Z]+:|$)", raw_text, re.DOTALL)
-                    summary_match = re.search(r"SUMMARY:\s*(.*?)$", raw_text, re.DOTALL)
-                    
-                    if headline_match: headline = headline_match.group(1).strip()
-                    if sentiment_match: sentiment = sentiment_match.group(1).strip()
-                    if summary_match: summary_body = summary_match.group(1).strip()
-                    if bullets_match: 
-                        bullets = [b.replace("-", "").strip() for b in bullets_match.group(1).split("~") if b.strip()]
-                except Exception:
+                if "HEADLINE:" in raw_text and "SUMMARY:" in raw_text:
+                    parts = raw_text.split("SUMMARY:")
+                    headline = parts[0].replace("HEADLINE:", "").strip()
+                    summary_body = parts[1].strip()
+                elif "\n" in raw_text:
                     split_lines = [l for l in raw_text.splitlines() if l.strip()]
-                    if split_lines: headline = split_lines[0]
+                    headline = split_lines[0]
+                    summary_body = "\n".join(split_lines[1:])
                 
-                raw_words_count = len(content.split())
-                st.session_state.reading_time = max(1, round(raw_words_count / 220))
-                st.session_state.bullets = bullets
-                st.session_state.sentiment = sentiment
-
                 input_tokens = int(len(prompt.split()) * 1.3)
                 output_tokens = int(len(raw_text.split()) * 1.3)
                 
@@ -344,7 +296,8 @@ def execute_summary(content, api_key, min_limit, max_limit):
             collected_errors.append(f"{current_model}: {str(e)}")
             continue
             
-    return None, None, None, "Cascade pools exhausted."
+    combined_log = " | ".join(collected_errors)
+    return None, None, None, f"Cascade Exhausted. Log: {combined_log}"
 
 # ---------------------------
 # UI Presentation Layer
@@ -352,42 +305,33 @@ def execute_summary(content, api_key, min_limit, max_limit):
 def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        
-        # Assembling bullet loops safely
-        bullet_html_payload = ""
-        for b in st.session_state.bullets:
-            if b.strip():
-                bullet_html_payload += f'<div class="bullet-item">🔸 <span>{b.strip()}</span></div>'
-        
-        # 📜 Beautiful Unified Paper White Newsroom Box Component
+        # Replicated exactly from the design footprint layout in image_1f44bc.png
         st.markdown(f"""
-        <div class="summary-section">
-            <h2>{st.session_state.headline}</h2>
-            
-            <div class="meta-badge-container">
-                <div class="meta-badge">📖 Read Time: {st.session_state.reading_time} min</div>
-                <div class="meta-badge">📊 Sentiment: {st.session_state.sentiment}</div>
-                <div class="meta-badge" style="color:#4F46E5;">⚡ Engine: {model_used}</div>
-            </div>
-            
-            <p>{st.session_state.last_summary}</p>
-            
-            <div class="takeout-header">⚡ Core Editorial Takeouts</div>
-            {bullet_html_payload}
+        <div class="headline-card-premium">
+            <span class="badge-headline">Generated Flash Headline</span>
+            <h2 style="text-align:left; margin:0; font-size:23px; color:#FFFFFF;">{st.session_state.headline}</h2>
+        </div>
+        <div class="summary-card-premium">
+            <span class="badge-summary">Analytical Synthesis Summary</span>
+            <p style="margin-top:4px; margin-bottom:0; line-height:1.7; font-size:14.5px; color:{THEME['text_color']};">{st.session_state.last_summary}</p>
         </div>
         """, unsafe_allow_html=True)
+        
+        if model_used:
+            st.caption(f"⚡ Engine Allocation Telemetry: Processed via free cluster `{model_used}` node.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------
-# Workspace Main Shell Controller Entrypoint
+# Main Shell Framework
 # ---------------------------
 def main():
     api_key, api_err = read_api_key()
     
     with st.sidebar:
         st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
-        st.caption("Pro Editorial Summarization Suite")
+        st.caption("Deep-Thinking Universal Core Engine")
         
+        # Fixed 100% Segmented Tracker Panel Layout inside the dark sidebar context
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
         
@@ -427,7 +371,7 @@ def main():
         st.error(api_err)
         return
 
-    # 🌐 Tab Navigation Setup Panel
+    # Tab Navigation Setup Panel
     tab_url, tab_text = st.tabs(["🌐 Live Domain URL Pipeline", "📝 Raw Text Block Parser"])
 
     with tab_url:
@@ -437,13 +381,12 @@ def main():
         with st.expander("🛠️ Custom Crawler Target Overrides"):
             custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
             
-        # Default Slider Constraints updated to exact 75-90 metric counts bounds window
         min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="url_slider")
         st.markdown("<br>", unsafe_allow_html=True)
         
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
-            process_url = st.button("🚀 Process Editorial Briefing", use_container_width=True, key="url_run_btn")
+            process_url = st.button("🚀 Process Domain Insights", use_container_width=True, key="url_run_btn")
         with b_col2:
             if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_url_action"):
                 st.session_state.headline = None
@@ -487,13 +430,12 @@ def main():
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
         raw_text = st.text_area("Pro Text Matrix Dropzone Area Block:", key="text_input_box", height=250, placeholder="Paste text copy blocks directly into this zone area...")
         
-        # Default Slider Constraints updated to exact 75-90 metric counts bounds window
         min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="text_slider")
         st.markdown("<br>", unsafe_allow_html=True)
         
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
-            process_text = st.button("🚀 Synthesize Transcripts Passage", use_container_width=True, key="text_run_btn")
+            process_text = st.button("🚀 Synthesize Textual Blocks", use_container_width=True, key="text_run_btn")
         with b_col2:
             if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_text_action"):
                 st.session_state.headline = None
