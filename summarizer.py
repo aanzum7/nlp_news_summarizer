@@ -23,12 +23,8 @@ if "model_used" not in st.session_state:
     st.session_state.model_used = None
 if "token_metrics" not in st.session_state:
     st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-
-# In-Memory Session Caching Vault
 if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
-
-# State trackers for favorites
 if "favorited_insights" not in st.session_state:
     st.session_state.favorited_insights = set()
 
@@ -60,6 +56,23 @@ st.markdown(f"""
         margin-bottom: 15px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     }}
+    
+    /* Interactive Dashboard Metrics Box */
+    .token-container {{
+        background: #111318;
+        border: 1px solid {THEME['card_border']};
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 10px;
+    }}
+    .token-row {{
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 13px;
+        border-bottom: 1px dashed #2D3139;
+    }}
+    .token-row:last-child {{ border: none; font-weight: bold; color: #10B981; }}
     
     h1, h2, h3, h4, h5 {{
         font-weight: 700;
@@ -156,7 +169,6 @@ def execute_summary(content, api_key, min_limit, max_limit):
         
     client = genai.Client(api_key=api_key)
     
-    # Strictly compressed rules targeting minimalist summary outputs to save tokens
     prompt = (
         f"Summarize the following text in the {detected_lang} language. "
         f"Keep the response strictly short and dense between {min_limit} and {max_limit} words. "
@@ -206,13 +218,13 @@ def execute_summary(content, api_key, min_limit, max_limit):
                     headline = split_lines[0]
                     summary_body = "\n".join(split_lines[1:])
                 
-                # Dynamic Token Allocation Metrics Estimation Math
+                # Accurately compute and update token usage counters
                 input_tokens = int(len(prompt.split()) * 1.3)
                 output_tokens = int(len(raw_text.split()) * 1.3)
                 
-                st.session_state.token_metrics["input"] += input_tokens
-                st.session_state.token_metrics["output"] += output_tokens
-                st.session_state.token_metrics["total"] += (input_tokens + output_tokens)
+                st.session_state.token_metrics["input"] = input_tokens
+                st.session_state.token_metrics["output"] = output_tokens
+                st.session_state.token_metrics["total"] = input_tokens + output_tokens
                     
                 return headline, summary_body, current_model, None
                 
@@ -233,19 +245,19 @@ def render_output_dashboard(model_used=None):
             <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:{THEME['accent_color']}; tracking-spacing:0.05em;">Generated Flash Headline</span>
             <h2 style="text-align:left; margin-top:4px; font-size:24px; color:#FFFFFF;">{st.session_state.headline}</h2>
         </div>
-        <div class="news-card">
-            <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:#10B981; tracking-spacing:0.05em;">Analytical Synthesis Summary</span>
-            <p style="margin-top:8px; line-height:1.7; font-size:15px; color:{THEME['text_color']};">{st.session_state.last_summary}</p>
-        </div>
         """, unsafe_allow_html=True)
         
-        # Interactive Social & Actions Toolbar
-        col_fav, col_share, _ = st.columns([1, 1, 4])
+        # Premium Output Display Card housing Top-Right Native Copy Feature Block
+        st.markdown("### 📄 Analytical Synthesis Summary")
+        full_markdown_payload = f"**{st.session_state.headline}**\n\n{st.session_state.last_summary}"
+        st.info(full_markdown_payload)
         
+        # Minimalist Action Bar Row
         current_id = st.session_state.headline
         is_loved = current_id in st.session_state.favorited_insights
         love_label = "❤️ Favorited" if is_loved else "🤍 Add to Favorites"
         
+        col_fav, _ = st.columns([1.5, 4])
         with col_fav:
             if st.button(love_label, key="love_btn_action", use_container_width=True):
                 if is_loved:
@@ -253,13 +265,8 @@ def render_output_dashboard(model_used=None):
                     st.toast("Removed from reading vault.")
                 else:
                     st.session_state.favorited_insights.add(current_id)
-                    st.toast("Added to reading vault!", icon="❤️")
+                    st.toast("Saved to reading vault!", icon="❤️")
                 st.rerun()
-                
-        with col_share:
-            # Native browser text clipboard wrapper interface trick using Streamlit code display block
-            st.markdown("<span style='font-size:12px; color:#9CA3AF;'>🔗 Share & Copy Text:</span>", unsafe_allow_html=True)
-            st.code(f"{st.session_state.headline}\n\n{st.session_state.last_summary}", language="markdown")
 
         if model_used:
             st.caption(f"⚡ Engine Allocation Telemetry: Processed via free cluster `{model_used}` node.")
@@ -270,7 +277,6 @@ def render_output_dashboard(model_used=None):
 def render_url_workspace(api_key):
     st.subheader("🌐 Universal URL Pipeline")
     
-    # Uses standard value parameters linked directly to clearing actions
     url = st.text_input("Target Article Link:", key="url_input_box", placeholder="Paste any live media network link or resource page here...")
     
     with st.expander("🛠️ Advanced Extraction Configurations"):
@@ -287,12 +293,12 @@ def render_url_workspace(api_key):
             st.session_state.headline = None
             st.session_state.last_summary = None
             st.session_state.model_used = None
-            st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True) # Direct field dump reset hook
+            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
+            st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
             st.rerun()
 
     if process_clicked:
         if url.strip():
-            # Check In-Session Cache to avoid using tokens
             cache_key = f"url_{url.strip()}_{min_limit}_{max_limit}"
             if cache_key in st.session_state.cache_vault:
                 cached_data = st.session_state.cache_vault[cache_key]
@@ -320,9 +326,9 @@ def render_url_workspace(api_key):
                             st.session_state.headline = hd
                             st.session_state.last_summary = sm
                             st.session_state.model_used = active_model
-                            # Save to session cache
                             st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
                             st.toast("Insights processing complete!", icon="✅")
+                            st.rerun() # Forces layout sync to flash token metric changes inside sidebar frame instantly
         else:
             st.warning("Please supply a valid location URL link pointer.")
             
@@ -331,7 +337,7 @@ def render_url_workspace(api_key):
 def render_text_workspace(api_key):
     st.subheader("📝 Textual Matrix Pipeline")
     
-    raw_text = st.text_area("Source Text Dropzone Block:", key="text_input_box", height=250, placeholder="Paste your transcripts, documentation, raw field files or manuscript passages directly into this block area...")
+    raw_text = st.text_area("Source Text Dropzone Block:", key="text_input_box", height=250, placeholder="Paste your text here...")
     min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (50, 120))
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -343,11 +349,11 @@ def render_text_workspace(api_key):
             st.session_state.headline = None
             st.session_state.last_summary = None
             st.session_state.model_used = None
+            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
             st.rerun()
 
     if process_clicked:
         if raw_text.strip():
-            # Check In-Session Cache
             cache_key = f"text_{hash(raw_text.strip())}_{min_limit}_{max_limit}"
             if cache_key in st.session_state.cache_vault:
                 cached_data = st.session_state.cache_vault[cache_key]
@@ -373,6 +379,7 @@ def render_text_workspace(api_key):
                         st.session_state.model_used = active_model
                         st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
                         st.toast("Synthesis processing complete!", icon="✅")
+                        st.rerun()
         else:
             st.warning("Please populate the data container target with character arrays.")
             
@@ -399,12 +406,16 @@ def main():
             st.session_state.last_summary = None
             st.rerun()
             
-        # Real-time Billed Tokens Tracker Panel Layout
+        # Highly Interactive Styled Live Telemetry Metric Container Block Box
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
-        st.metric(label="Input Tokens Used", value=st.session_state.token_metrics["input"])
-        st.metric(label="Output Tokens Used", value=st.session_state.token_metrics["output"])
-        st.metric(label="Billed Token Volume", value=st.session_state.token_metrics["total"])
+        st.markdown(f"""
+        <div class="token-container">
+            <div class="token-row"><span>Input Tokens Used</span> <span>{st.session_state.token_metrics["input"]}</span></div>
+            <div class="token-row"><span>Output Tokens Used</span> <span>{st.session_state.token_metrics["output"]}</span></div>
+            <div class="token-row"><span>Billed Token Volume</span> <span>{st.session_state.token_metrics["total"]}</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
         st.title("👨‍💻 About the Author")
