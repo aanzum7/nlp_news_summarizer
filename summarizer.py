@@ -257,7 +257,6 @@ def execute_summary(content, api_key, min_limit, max_limit):
         
     client = genai.Client(api_key=api_key)
     
-    # Professional journalistic structured parsing schema blueprint
     prompt = (
         f"You are a professional editorial news desk agent operating in language space: {detected_lang}.\n"
         f"Analyze the text corpus provided below and extract analytical structures.\n\n"
@@ -296,7 +295,6 @@ def execute_summary(content, api_key, min_limit, max_limit):
             if response and response.text:
                 raw_text = response.text.strip()
                 
-                # Structural block extractor mapping
                 headline = "Editorial Wire Briefing"
                 summary_body = "Failed to parse system elements text."
                 bullets = ["Core takeout analysis tracking live."]
@@ -314,13 +312,11 @@ def execute_summary(content, api_key, min_limit, max_limit):
                     if bullets_match: 
                         bullets = [b.replace("-", "").strip() for b in bullets_match.group(1).split("~") if b.strip()]
                 except Exception:
-                    # Generic string chunking backup safety layout
                     split_lines = [l for l in raw_text.splitlines() if l.strip()]
                     if len(split_lines) > 1:
                         headline = split_lines[0]
                         summary_body = "\n".join(split_lines[1:])
                 
-                # Estimate word counting metrics parameters
                 raw_words_count = len(content.split())
                 st.session_state.reading_time = max(1, round(raw_words_count / 230))
                 st.session_state.bullets = bullets
@@ -346,7 +342,6 @@ def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
         
-        # Build list structure elements block safely
         bullet_html_payload = ""
         for b in st.session_state.bullets:
             if b.strip():
@@ -370,7 +365,7 @@ def render_output_dashboard(model_used=None):
         </div>
         """, unsafe_allow_html=True)
         
-        # Clean production grade native copy container
+        # Clean production grade copy container
         st.markdown("##### 📋 Clipboard Wire String")
         copy_string = f"📌 {st.session_state.headline}\n\n📝 SUMMARY:\n{st.session_state.last_summary}"
         st.code(copy_string, language="markdown", wrap_lines=True)
@@ -447,7 +442,7 @@ def main():
         st.error(api_err)
         return
 
-    # 🌐 Native Navigation Tab Stack Workspace Panels
+    # 🌐 Navigation Tabs
     tab_url, tab_text = st.tabs(["🌐 Live Domain URL Pipeline", "📝 Raw Text Block Parser"])
 
     with tab_url:
@@ -457,7 +452,8 @@ def main():
         with st.expander("🛠️ Custom Crawler Target Overrides"):
             custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. article-body-paragraphs-class")
             
-        min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 50, 400, (80, 180), key="url_slider")
+        # Updated target boundary bounds value payload default array structure range to 75-90
+        min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="url_slider")
         
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
@@ -504,14 +500,11 @@ def main():
 
     with tab_text:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        raw_text = st.text_area("Pro Text Matrix Dropzone Area Block:", key="text_input_box", height=250, placeholder="Paste raw documentation passages, literature entries, or notes details directly inside this workspace area...")
-        # Updated Slider Configurations inside render_url_workspace and render_text_workspace
-        min_limit, max_limit = st.slider(
-            "Synthesis Prose Word Boundaries:", 
-            40, 300, (75, 90), 
-            key="url_slider"  # and "text_slider" for the text tab
-        )
-                
+        raw_text = st.text_area("Pro Text Matrix Dropzone Area Block:", key="text_input_box", height=250, placeholder="Paste raw documentation passages directly inside this workspace area...")
+        
+        # Updated target boundary bounds value payload default array structure range to 75-90
+        min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="text_slider")
+        
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
             process_text = st.button("🚀 Synthesize Transcripts Passage", use_container_width=True, key="text_run_btn")
