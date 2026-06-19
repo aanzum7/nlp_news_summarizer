@@ -25,8 +25,6 @@ if "token_metrics" not in st.session_state:
     st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
 if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
-if "favorited_insights" not in st.session_state:
-    st.session_state.favorited_insights = set()
 
 # ---------------------------
 # 🎨 PREMIUM THEME CONFIGURATION
@@ -38,7 +36,7 @@ THEME = {
     "text_color": "#E1E4EA",             # Clean Off-White
     "accent_color": "#4F46E5",           # Electric Indigo
     "box_bg": "#1E293B",                 # Deep Indigo-Slate box background
-    "box_border": "#4F46E5",             # Vibrant border accent accentuating the output box
+    "box_border": "#4F46E5",             # Vibrant border accent
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
@@ -59,19 +57,27 @@ st.markdown(f"""
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     }}
 
-    /* 🎨 Premium Colorful Output Box Style */
+    /* 🎨 Premium Colorful Output Box Style with Title Inside */
     .colorful-summary-box {{
-        padding: 20px;
+        padding: 24px;
         background-color: {THEME['box_bg']};
         border: 1px solid {THEME['box_border']};
-        border-left: 5px solid {THEME['box_border']};
-        border-radius: 10px;
-        margin-top: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.15);
+        border-left: 6px solid {THEME['box_border']};
+        border-radius: 12px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);
+    }}
+    .colorful-summary-box h3 {{
+        color: #FFFFFF !important;
+        font-size: 22px;
+        margin-top: 0;
+        margin-bottom: 12px;
+        text-align: left;
+        line-height: 1.4;
     }}
     .colorful-summary-box p {{
-        color: #F1F5F9 !important;
+        color: #E2E8F0 !important;
         font-size: 15px;
         line-height: 1.7;
         margin: 0;
@@ -299,39 +305,14 @@ def execute_summary(content, api_key, min_limit, max_limit):
 # ---------------------------
 def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
-        st.markdown(f"""
-        <div class="news-card" style="border-left: 5px solid {THEME['accent_color']};">
-            <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:{THEME['accent_color']}; tracking-spacing:0.05em;">Generated Flash Headline</span>
-            <h2 style="text-align:left; margin-top:4px; font-size:24px; color:#FFFFFF;">{st.session_state.headline}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 🎨 Colorful Summary Box Display Wrapper (Standalone Headline style removed)
+        # 🎨 Unified Colorful Summary Box Layout (Headline + Summary inside a single clean component block)
         st.markdown(f"""
         <div class="colorful-summary-box">
+            <h3>📰 {st.session_state.headline}</h3>
             <p>{st.session_state.last_summary}</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Native Copy Code Shell containing strictly the summary block context
-        st.code(st.session_state.last_summary, language="markdown", wrap_lines=True)
-        
-        # Actions Row
-        current_id = st.session_state.headline
-        is_loved = current_id in st.session_state.favorited_insights
-        love_label = "❤️ Favorited" if is_loved else "🤍 Add to Favorites"
-        
-        col_fav, _ = st.columns([1.5, 4])
-        with col_fav:
-            if st.button(love_label, key="love_btn_action", use_container_width=True):
-                if is_loved:
-                    st.session_state.favorited_insights.remove(current_id)
-                    st.toast("Removed from reading vault.")
-                else:
-                    st.session_state.favorited_insights.add(current_id)
-                    st.toast("Saved to reading vault!", icon="❤️")
-                st.rerun()
-
         if model_used:
             st.caption(f"⚡ Engine Allocation Telemetry: Processed via free cluster `{model_used}` node.")
 
