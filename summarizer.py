@@ -1,118 +1,79 @@
-import streamlit as st
+import streamlit as st  # type: ignore
+import pandas as pd  # type: ignore
 import requests
 from bs4 import BeautifulSoup
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import langdetect
-from functools import lru_cache
 import re
 
 # ---------------------------
-# ✅ Page Config (must be first Streamlit command!)
+# ✅ Page Config (Strictly First)
 # ---------------------------
-st.set_page_config(page_title="InsightInMinutes", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="InsightInMinutes | Pro News Dashboard", page_icon="🔎", layout="wide")
+
+# Initialize Session States
+if "selected_page" not in st.session_state:
+    st.session_state.selected_page = "URL"
+if "last_summary" not in st.session_state:
+    st.session_state.last_summary = None
+if "headline" not in st.session_state:
+    st.session_state.headline = None
 
 # ---------------------------
-# 🎨 THEME CONFIGURATION
+# 🎨 PREMIUM THEME CONFIGURATION
 # ---------------------------
 THEME = {
-    "background_color": "#f4db95",      # Creamy old-paper
-    "text_color": "#0d0d0d",            # Dark text
-    "header_color": "#111111",          # Darker headings
-    "subheader_color": "#333333",       # Slightly lighter
-    "button_color": "#444444",          # Charcoal
-    "button_hover_color": "#222222",    # Almost black
-    "card_border": "#c7b78b",           # Antique brown border
-    "card_bg": "#fffdfa",               # Light creamy boxes
-    "headline_color": "#000000",        # Headline black
-    "summary_color": "#111111",         # Summary dark gray
-    "section_padding": "18px",
-    "font_family": "Georgia, serif"
+    "background_color": "#0F1115",       # Rich Slate Dark
+    "card_bg": "#1A1D24",                # Charcoal Panel
+    "card_border": "#2D3139",            # Modern Gray Trim
+    "text_color": "#E1E4EA",             # Clean Off-White
+    "accent_color": "#4F46E5",           # Electric Indigo
+    "accent_hover": "#4338CA",           # Deep Indigo
+    "headline_color": "#FFFFFF",         # Pure White Headline
+    "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
-# ---------------------------
-# CSS STYLING
-# ---------------------------
 st.markdown(f"""
 <style>
-.stApp {{
-    background-color: {THEME['background_color']};
-    color: {THEME['text_color']};
-    font-family: {THEME['font_family']};
-}}
-
-h1, h2, h3, h4, h5 {{
-    text-align: center;
-    color: {THEME['header_color']};
-    margin-bottom: 12px;
-}}
-h3 {{
-    color: {THEME['subheader_color']};
-}}
-
-.stButton>button {{
-    background-color: {THEME['button_color']};
-    color: white;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-weight: 500;
-    width: 100%;
-}}
-.stButton>button:hover {{
-    background-color: {THEME['button_hover_color']};
-    color: white;
-}}
-
-.stTextArea textarea, .stTextInput>div>input {{
-    background-color: {THEME['card_bg']} !important;
-    border: 1px solid {THEME['card_border']} !important;
-    border-radius: 6px !important;
-    color: {THEME['text_color']} !important;
-    caret-color: {THEME['text_color']} !important;
-}}
-
-[data-testid="stMarkdownContainer"] p {{
-    color: {THEME['text_color']} !important;
-    font-size: 15px;
-    line-height: 1.6;
-}}
-
-.summary-section {{
-    padding: {THEME['section_padding']};
-    border: 1px solid {THEME['card_border']};
-    background-color: {THEME['card_bg']};
-    border-radius: 10px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    text-align: center;
-    color: {THEME['text_color']};
-    box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
-}}
-
-.sidebar-tabs {{
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-}}
-.sidebar-tab {{
-    padding: 8px 12px;
-    background-color: {THEME['card_bg']};
-    border: 1px solid {THEME['card_border']};
-    border-radius: 6px;
-    color: {THEME['text_color']};
-    font-weight: 500;
-    cursor: pointer;
-    text-align: center;
-    flex: 1;
-}}
-.sidebar-tab.active {{
-    background-color: {THEME['button_color']};
-    color: white;
-}}
-.sidebar-tab:hover {{
-    background-color: {THEME['button_hover_color']};
-    color: white;
-}}
+    html, body, [data-testid="stAppViewContainer"] {{
+        background-color: {THEME['background_color']};
+        font-family: {THEME['font_family']};
+        color: {THEME['text_color']};
+    }}
+    
+    /* Panel Cards */
+    .news-card {{
+        background: {THEME['card_bg']};
+        border: 1px solid {THEME['card_border']};
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }}
+    
+    /* Typography Overrides */
+    h1, h2, h3, h4, h5 {{
+        font-weight: 700;
+        color: #FFFFFF;
+    }}
+    
+    /* Inputs */
+    .stTextArea textarea, .stTextInput>div>input {{
+        background-color: {THEME['card_bg']} !important;
+        border: 1px solid {THEME['card_border']} !important;
+        border-radius: 8px !important;
+        color: {THEME['text_color']} !important;
+    }}
+    .stTextArea textarea:focus, .stTextInput>div>input:focus {{
+        border-color: {THEME['accent_color']} !important;
+    }}
+    
+    /* Sidebar Layout Fixes */
+    [data-testid="stSidebar"] {{
+        background-color: #111318 !important;
+        border-right: 1px solid {THEME['card_border']};
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -122,249 +83,208 @@ h3 {{
 def read_api_key():
     try:
         return st.secrets["genai"]["api_key"], None
-    except KeyError:
-        return None, "API key missing in `.streamlit/secrets.toml`."
+    except Exception:
+        return None, "API key missing in configuration files."
 
 # ---------------------------
-# URL Extractor
+# Universal Intelligent Link Engine
 # ---------------------------
-def extract_content_from_url(url, target_classes):
+def extract_universal_content(url, custom_class=None):
     try:
-        response = requests.get(url)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(url, headers=headers, timeout=12)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-        paragraphs = []
-        for target_class in target_classes:
-            paragraphs.extend(
-                p.get_text(strip=True)
-                for div in soup.find_all('div', class_=target_class)
-                for p in div.find_all('p')
-            )
+        
+        # Scenario 1: Custom Explicit Override CSS target rule provided by user
+        if custom_class:
+            paragraphs = []
+            for div in soup.find_all(class_=custom_class):
+                paragraphs.extend([p.get_text(strip=True) for p in div.find_all('p')])
+            if paragraphs:
+                return "\n".join(paragraphs), None
+                
+        # Scenario 2: Semi-automated known media signatures match
+        patterns = {
+            "prothomalo\\.com": ["story-element-text"],
+            "thedailystar\\.net": ["pb-20", "clearfix"],
+            "dw\\.com": ["rich-text"],
+            "tbsnews\\.net": ["section-content"],
+            "mzamin\\.com": ["lh-base"]
+        }
+        for pattern, classes in patterns.items():
+            if re.search(pattern, url):
+                paragraphs = []
+                for cls in classes:
+                    for div in soup.find_all(class_=cls):
+                        paragraphs.extend([p.get_text(strip=True) for p in div.find_all('p')])
+                if paragraphs:
+                    return "\n".join(paragraphs), None
+
+        # Scenario 3: Deep fallback heuristic (Universal Parser)
+        # Drops typical boilerplate navigation clusters to map readable prose blocks on any URL link.
+        for element in soup(["nav", "footer", "header", "script", "style", "aside", "form"]):
+            element.decompose()
+            
+        paragraphs = [p.get_text(strip=True) for p in soup.find_all('p') if len(p.get_text(strip=True).split()) > 8]
         combined = "\n".join(paragraphs)
-        if not combined or len(combined.split()) < 50:
-            return None, "❌ Content too short or invalid."
+        
+        if len(combined.split()) < 40:
+            # Drop constraint checks to capture raw textual nodes safely if layout contains few paragraphs
+            combined = soup.get_text(separator="\n", strip=True)
+            
         return combined, None
     except Exception as e:
-        return None, f"Error: {e}"
+        return None, f"Scraping Failure: {str(e)}"
 
 # ---------------------------
-# Summarizer
+# GenAI Processing Core
 # ---------------------------
-@lru_cache(maxsize=10)
-def summarize_content(content, api_key, min_limit, max_limit):
+def execute_summary(content, api_key, min_limit, max_limit):
     try:
-        lang = langdetect.detect(content)
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash-lite",
-            generation_config={"temperature": 0.4, "top_p": 0.9, "max_output_tokens": 1024},
-        )
-        chat = model.start_chat()
+        detected_lang = langdetect.detect(content)
+    except Exception:
+        detected_lang = "en"
+        
+    try:
+        # Initialize the updated google-genai Client structure
+        client = genai.Client(api_key=api_key)
+        
         prompt = (
-            f"You are a journalist summarizing content in {lang}. "
-            f"Generate a headline and a summary within {min_limit} to {max_limit} words, "
-            "preserving the language and tone.\n\n"
-            f"Content:\n{content}"
+            f"Analyze the following textual corpus. Generate a short, informative headline "
+            f"followed by a clean structured news summary within {min_limit} to {max_limit} words. "
+            f"Crucial rule: Write entirely inside the {detected_lang} language space. "
+            f"Format response explicitly with 'HEADLINE:' and 'SUMMARY:' prefixes to ensure proper parsing.\n\n"
+            f"Corpus Content:\n{content}"
         )
-        response = chat.send_message(prompt)
+        
+        generate_config = types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_level="HIGH"),
+            tools=[types.Tool(googleSearch=types.GoogleSearch())]
+        )
+        
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt,
+            config=generate_config
+        )
+        
         if response and response.text:
-            return response.text.strip(), None
-        return None, "❌ No response generated."
+            raw_text = response.text.strip()
+            # Parsed structural extraction metrics block
+            headline = "Market Insights Update"
+            summary_body = raw_text
+            
+            if "HEADLINE:" in raw_text and "SUMMARY:" in raw_text:
+                parts = raw_text.split("SUMMARY:")
+                headline = parts[0].replace("HEADLINE:", "").strip()
+                summary_body = parts[1].strip()
+            elif "\n" in raw_text:
+                split_lines = [l for l in raw_text.splitlines() if l.strip()]
+                headline = split_lines[0]
+                summary_body = "\n".join(split_lines[1:])
+                
+            return headline, summary_body, None
+        return None, None, "No output delivered from inference nodes."
     except Exception as e:
-        return None, f"Error summarizing: {e}"
+        return None, None, f"AI Processing Error: {str(e)}"
 
 # ---------------------------
-# Reset Output
+# UI Presentation Layer
 # ---------------------------
-def reset_output(page_type):
-    if page_type == "url":
-        st.session_state.pop("generated_url", None)
-        st.session_state.pop("last_summary", None)
-    elif page_type == "text":
-        st.session_state.pop("generated_text", None)
-        st.session_state.pop("last_summary", None)
-    st.rerun()
-
-# ---------------------------
-# Detect Source
-# ---------------------------
-def detect_source_from_url(url):
-    patterns = {
-        "Daily Prothom Alo": r"prothomalo\.com",
-        "The Daily Star": r"thedailystar\.net",
-        "DW": r"dw\.com",
-        "The Business Standard": r"tbsnews\.net",
-        "Daily Manab Zamin": r"mzamin\.com",
-    }
-    for name, pattern in patterns.items():
-        if re.search(pattern, url or ""):
-            return name
-    return "Other"
+def render_output_dashboard():
+    if st.session_state.last_summary:
+        st.markdown(f"""
+        <div class="news-card" style="border-left: 5px solid {THEME['accent_color']};">
+            <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:{THEME['accent_color']}; tracking-spacing:0.05em;">Generated Flash Headline</span>
+            <h2 style="text-align:left; margin-top:4px; font-size:24px; color:{THEME['headline_color']};">{st.session_state.headline}</h2>
+        </div>
+        <div class="news-card">
+            <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:#10B981; tracking-spacing:0.05em;">Analytical Synthesis Summary</span>
+            <p style="margin-top:8px; line-height:1.7; font-size:15px; color:{THEME['text_color']};">{st.session_state.last_summary}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ---------------------------
-# Display Summary
+# Base Route Views
 # ---------------------------
-def display_summary(summary_text):
-    if summary_text:
-        lines = summary_text.splitlines()
-        st.markdown(
-            f"<div class='summary-section'><h3 style='color:{THEME['headline_color']}'>📰 Headline</h3>"
-            f"<p>{lines[0]}</p></div>", unsafe_allow_html=True
-        )
-        st.markdown(
-            f"<div class='summary-section'><h3 style='color:{THEME['summary_color']}'>📄 Summary</h3>"
-            f"<p>{' '.join(lines[1:])}</p></div>", unsafe_allow_html=True
-        )
-
-# ---------------------------
-# URL Page
-# ---------------------------
-def url_page(api_key):
-    st.title("🌐 URL Summarizer")
-    url = st.text_input("Enter News URL:")
-
-    if "last_url" not in st.session_state:
-        st.session_state.last_url = ""
-    if url != st.session_state.last_url:
-        st.session_state.last_url = url
-        st.session_state.generated_url = False
-        st.session_state.last_summary = None
-
-    detected_source = detect_source_from_url(url) if url else None
-    target_classes_map = {
-        "Daily Prothom Alo": ["story-element story-element-text"],
-        "The Daily Star": ["pb-20 clearfix"],
-        "DW": ["c17j8gzx rc0m0op r1ebneao s198y7xq rich-text li5mn0y r16w0xvi w1fzgn0z blt0baw"],
-        "The Business Standard": ["section-content clearfix margin-bottom-2", "section-content margin-bottom-2"],
-        "Daily Manab Zamin": ["col-sm-10 offset-sm-1 fs-5 lh-base mt-4 mb-5"],
-    }
-
-    if detected_source and detected_source != "Other":
-        st.info(f"Detected Source: **{detected_source}**")
-        target_classes = target_classes_map.get(detected_source, [])
-        custom_class = ""
-    else:
-        st.info("Source not recognized. Provide CSS class for article content.")
-        custom_class = st.text_input("Enter CSS Class for Article Content:")
-        target_classes = [custom_class] if custom_class else []
-
-    min_limit, max_limit = st.slider("Set Summary Length Range (words):", 50, 250, (70, 150))
-
-    if "generated_url" not in st.session_state:
-        st.session_state.generated_url = False
-
-    if not st.session_state.generated_url:
-        if st.button("🚀 Generate Summary", use_container_width=True):
-            if url and target_classes and (detected_source != "Other" or custom_class):
-                with st.spinner("Fetching and Summarizing..."):
-                    content, error = extract_content_from_url(url, target_classes)
-                    if error:
-                        st.error(error)
-                    elif content:
-                        summary, error = summarize_content(content, api_key, min_limit, max_limit)
-                        if error:
-                            st.error(error)
-                        else:
-                            display_summary(summary)
-                            st.session_state.generated_url = True
-                            st.session_state.last_summary = summary
-                            st.rerun()
+def render_url_workspace(api_key):
+    st.subheader("🌐 Universal URL Pipeline")
+    url = st.text_input("Target Article Link:", placeholder="Paste any live media network link or resource page here...")
+    
+    with st.expander("🛠️ Advanced Extraction Configurations"):
+        custom_class = st.text_input("Explicit Content CSS Selector Override (Optional):", placeholder="e.g. article-body-text-class")
+        
+    min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (60, 140))
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚀 Process Domain Insights", use_container_width=True):
+        if url.strip():
+            with st.spinner("Extracting web payload components & generating insight layout..."):
+                content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
+                if scrap_err:
+                    st.error(scrap_err)
+                elif content:
+                    hd, sm, ai_err = execute_summary(content, api_key, min_limit, max_limit)
+                    if ai_err:
+                        st.error(ai_err)
                     else:
-                        st.error("❌ Failed to extract content.")
-            else:
-                st.warning("Please enter URL and CSS Class.")
-    else:
-        display_summary(st.session_state.last_summary)
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("♻️ Regenerate Summary", use_container_width=True):
-                with st.spinner("Regenerating..."):
-                    content, error = extract_content_from_url(url, target_classes)
-                    if error:
-                        st.error(error)
-                    elif content:
-                        summary, error = summarize_content(content, api_key, min_limit, max_limit)
-                        if error:
-                            st.error(error)
-                        else:
-                            st.session_state.last_summary = summary
-                            st.rerun()
-        with col2:
-            if st.button("🏠 Home", use_container_width=True):
-                reset_output("url")
+                        st.session_state.headline = hd
+                        st.session_state.last_summary = sm
+                        st.toast("Insights processing complete!", icon="✅")
+        else:
+            st.warning("Please supply a valid location URL link pointer.")
+            
+    render_output_dashboard()
+
+def render_text_workspace(api_key):
+    st.subheader("📝 Textual Matrix Pipeline")
+    raw_text = st.text_area("Source Text Dropzone Block:", height=250, placeholder="Paste your transcripts, documentation, raw field files or manuscript passages directly into this block area...")
+    min_limit, max_limit = st.slider("Target Length Footprint (Words count limits):", 40, 300, (60, 140))
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚀 Synthesize Textual Blocks", use_container_width=True):
+        if raw_text.strip():
+            with st.spinner("Executing sequence processing logic across inputs..."):
+                hd, sm, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
+                if ai_err:
+                    st.error(ai_err)
+                else:
+                    st.session_state.headline = hd
+                    st.session_state.last_summary = sm
+                    st.toast("Synthesis processing complete!", icon="✅")
+        else:
+            st.warning("Please populate the data container target with character arrays.")
+            
+    render_output_dashboard()
 
 # ---------------------------
-# Text Page
-# ---------------------------
-def text_page(api_key):
-    st.title("📝 Text Summarizer")
-    input_text = st.text_area("Paste Your Text Here:", height=250)
-    min_limit, max_limit = st.slider("Set Summary Length Range (words):", 50, 250, (70, 150))
-
-    if "generated_text" not in st.session_state:
-        st.session_state.generated_text = False
-
-    if not st.session_state.generated_text:
-        if st.button("🚀 Generate Summary", use_container_width=True):
-            if input_text.strip():
-                with st.spinner("Generating..."):
-                    summary, error = summarize_content(input_text.strip(), api_key, min_limit, max_limit)
-                    if error:
-                        st.error(error)
-                    else:
-                        display_summary(summary)
-                        st.session_state.generated_text = True
-                        st.session_state.last_summary = summary
-                        st.rerun()
-            else:
-                st.warning("Please input some text.")
-    else:
-        display_summary(st.session_state.last_summary)
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("♻️ Regenerate Summary", use_container_width=True):
-                with st.spinner("Regenerating..."):
-                    summary, error = summarize_content(input_text.strip(), api_key, min_limit, max_limit)
-                    if error:
-                        st.error(error)
-                    else:
-                        st.session_state.last_summary = summary
-                        st.rerun()
-        with col2:
-            if st.button("🏠 Home", use_container_width=True):
-                reset_output("text")
-
-# ---------------------------
-# Main App
+# Main Shell Framework
 # ---------------------------
 def main():
-    # Sidebar Tabs & Info
+    api_key, api_err = read_api_key()
+    
     with st.sidebar:
-        st.title("📰 InsightInMinutes")
-        st.caption("⚡ AI-powered News Summarizer")
-        st.markdown("""
-            <div style='font-size: 14px; font-weight: normal;'>
-            Summarize from <strong>URL</strong> or <strong>custom text</strong> using predefined or user-defined sources.  
-            Built for <strong>speed, clarity, and insight</strong>.
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
+        st.caption("Deep-Thinking Universal Core Engine")
         st.markdown("---")
-
-        if "selected_page" not in st.session_state:
+        
+        # Navigation Interface Block Actions
+        st.markdown("### Pipeline Portals")
+        if st.button("🌐 Live Domain URL Pipeline", use_container_width=True):
             st.session_state.selected_page = "URL"
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🌐 URL Summarizer", key="tab_url"):
-                st.session_state.selected_page = "URL"
-        with col2:
-            if st.button("📝 Text Summarizer", key="tab_text"):
-                st.session_state.selected_page = "TEXT"
-
+            st.session_state.last_summary = None
+            st.rerun()
+        if st.button("📝 Raw Text Block Parser", use_container_width=True):
+            st.session_state.selected_page = "TEXT"
+            st.session_state.last_summary = None
+            st.rerun()
+            
         st.markdown("---")
         st.title("👨‍💻 About the Author")
         st.caption("Tanvir Anzum – AI & Data Researcher")
         st.markdown("""
-            <div style='font-size: 14px; font-weight: normal;'>
+            <div style='font-size: 14px; font-weight: normal; color:#9CA3AF;'>
             Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
             </div>
         """, unsafe_allow_html=True)
@@ -372,32 +292,28 @@ def main():
         st.markdown("""
             <div style='font-size: 14px; font-weight: normal;'>
             <br>
-            <a href="https://www.linkedin.com/in/aanzum" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="16" style="vertical-align:middle; margin-right:6px;">
+            <a href="https://www.linkedin.com/in/aanzum" target="_blank" style="color:#4F46E5; text-decoration:none;">
+                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" style="vertical-align:middle; margin-right:4px;">
                 <strong>LinkedIn</strong>
             </a>
-            &nbsp;&nbsp;
-            <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="16" style="vertical-align:middle; margin-right:6px;">
+            &nbsp;&nbsp;&nbsp;
+            <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" style="color:#4F46E5; text-decoration:none;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="14" style="vertical-align:middle; margin-right:4px;">
                 <strong>Research</strong>
             </a>
             </div>
         """, unsafe_allow_html=True)
         st.markdown("---")
 
-    api_key, error_api = read_api_key()
-    if error_api:
-        st.error(error_api)
+    if api_err:
+        st.error(api_err)
         return
 
-    page = st.session_state.selected_page
-    if page == "URL":
-        url_page(api_key)
+    # Workspace Portal Routers
+    if st.session_state.selected_page == "URL":
+        render_url_workspace(api_key)
     else:
-        text_page(api_key)
+        render_text_workspace(api_key)
 
-# ---------------------------
-# Run App
-# ---------------------------
 if __name__ == "__main__":
     main()
