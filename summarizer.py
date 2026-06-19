@@ -35,8 +35,9 @@ THEME = {
     "card_border": "#2D3139",            # Modern Gray Trim
     "text_color": "#E1E4EA",             # Clean Off-White
     "accent_color": "#4F46E5",           # Electric Indigo
-    "box_bg": "#1E293B",                 # Deep Indigo-Slate box background
-    "box_border": "#4F46E5",             # Vibrant border accent
+    "classic_summary_bg": "#fffdfa",     # Classic creamy box from original theme
+    "classic_summary_border": "#c7b78b", # Antique brown border from original theme
+    "classic_text_color": "#0d0d0d",     # High contrast dark text for clarity
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
@@ -57,29 +58,32 @@ st.markdown(f"""
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     }}
 
-    /* 🎨 Premium Colorful Output Box Style with Title Inside */
-    .colorful-summary-box {{
+    /* 📜 Classic Creamy News Style Box Layout */
+    .summary-section {{
         padding: 24px;
-        background-color: {THEME['box_bg']};
-        border: 1px solid {THEME['box_border']};
-        border-left: 6px solid {THEME['box_border']};
-        border-radius: 12px;
+        border: 1px solid {THEME['classic_summary_border']};
+        background-color: {THEME['classic_summary_bg']};
+        border-radius: 10px;
         margin-top: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);
+        color: {THEME['classic_text_color']};
+        box-shadow: 1px 1px 8px rgba(0,0,0,0.15);
     }}
-    .colorful-summary-box h3 {{
-        color: #FFFFFF !important;
+    .summary-section h3 {{
+        color: #000000 !important;
         font-size: 22px;
+        font-weight: 700;
         margin-top: 0;
         margin-bottom: 12px;
         text-align: left;
         line-height: 1.4;
+        border-bottom: 1px solid {THEME['classic_summary_border']};
+        padding-bottom: 8px;
     }}
-    .colorful-summary-box p {{
-        color: #E2E8F0 !important;
+    .summary-section p {{
+        color: {THEME['classic_text_color']} !important;
         font-size: 15px;
-        line-height: 1.7;
+        line-height: 1.6;
         margin: 0;
     }}
     
@@ -305,9 +309,9 @@ def execute_summary(content, api_key, min_limit, max_limit):
 # ---------------------------
 def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
-        # 🎨 Unified Colorful Summary Box Layout (Headline + Summary inside a single clean component block)
+        # 📰 Reverted Classic Layout Box (Headline + Summary grouped in one card)
         st.markdown(f"""
-        <div class="colorful-summary-box">
+        <div class="summary-section">
             <h3>📰 {st.session_state.headline}</h3>
             <p>{st.session_state.last_summary}</p>
         </div>
