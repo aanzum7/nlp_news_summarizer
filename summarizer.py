@@ -16,9 +16,9 @@ st.set_page_config(page_title="InsightInMinutes | Pro News Dashboard", page_icon
 if "selected_page" not in st.session_state:
     st.session_state.selected_page = "URL"
 if "last_summary" not in st.session_state:
-    st.session_state.last_summary = ""
+    st.session_state.last_summary = None
 if "headline" not in st.session_state:
-    st.session_state.headline = ""
+    st.session_state.headline = None
 if "model_used" not in st.session_state:
     st.session_state.model_used = None
 if "token_metrics" not in st.session_state:
@@ -55,6 +55,53 @@ st.markdown(f"""
         padding: 24px;
         margin-bottom: 15px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }}
+    
+    /* Interactive Dashboard Metrics Box with Color Progress Bars */
+    .token-container {{
+        background: #111318;
+        border: 1px solid {THEME['card_border']};
+        border-radius: 10px;
+        padding: 16px;
+        margin-top: 10px;
+    }}
+    .progress-bar-wrapper {{
+        margin-bottom: 14px;
+    }}
+    .progress-bar-label {{
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-bottom: 4px;
+        color: #9CA3AF;
+    }}
+    .progress-track {{
+        background: #2D3139;
+        border-radius: 20px;
+        height: 8px;
+        width: 100%;
+        overflow: hidden;
+    }}
+    .progress-fill-red {{
+        background: #EF4444;
+        height: 100%;
+        border-radius: 20px;
+        transition: width 0.6s ease-in-out;
+    }}
+    .progress-fill-green {{
+        background: #10B981;
+        height: 100%;
+        border-radius: 20px;
+        transition: width 0.6s ease-in-out;
+    }}
+    .token-row-total {{
+        display: flex;
+        justify-content: space-between;
+        padding-top: 8px;
+        font-size: 14px;
+        font-weight: bold;
+        color: #3B82F6;
+        border-top: 1px solid #2D3139;
     }}
     
     h1, h2, h3, h4, h5 {{
@@ -229,19 +276,12 @@ def render_output_dashboard(model_used=None):
         </div>
         """, unsafe_allow_html=True)
         
-        # Human-editable output workspace fields (Full Copy/Paste + Edit Control)
-        st.markdown("### 📄 Human-Editable Summary Output")
+        # Premium Native Clipboard Copy Shell Component
+        st.markdown("### 📄 Analytical Synthesis Summary")
+        full_markdown_payload = f"📌 {st.session_state.headline}\n\n{st.session_state.last_summary}"
+        st.code(full_markdown_payload, language="markdown", wrap_lines=True)
         
-        combined_editable_text = f"【 {st.session_state.headline} 】\n\n{st.session_state.last_summary}"
-        
-        # Renders text area allowing real-time edits and instant copy actions
-        edited_text = st.text_area(
-            "Modify or select text to copy directly:", 
-            value=combined_editable_text, 
-            height=200, 
-            key="editable_summary_block"
-        )
-        
+        # Actions Row
         current_id = st.session_state.headline
         is_loved = current_id in st.session_state.favorited_insights
         love_label = "❤️ Favorited" if is_loved else "🤍 Add to Favorites"
@@ -279,10 +319,11 @@ def render_url_workspace(api_key):
         process_clicked = st.button("🚀 Process Domain Insights", use_container_width=True)
     with b_col2:
         if st.button("🗑️ Clear", use_container_width=True, key="clear_url_action"):
-            st.session_state.headline = ""
-            st.session_state.last_summary = ""
+            st.session_state.headline = None
+            st.session_state.last_summary = None
             st.session_state.model_used = None
             st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
+            st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
             st.rerun()
 
     if process_clicked:
@@ -334,8 +375,8 @@ def render_text_workspace(api_key):
         process_clicked = st.button("🚀 Synthesize Textual Blocks", use_container_width=True)
     with b_col2:
         if st.button("🗑️ Clear", use_container_width=True, key="clear_text_action"):
-            st.session_state.headline = ""
-            st.session_state.last_summary = ""
+            st.session_state.headline = None
+            st.session_state.last_summary = None
             st.session_state.model_used = None
             st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
             st.rerun()
@@ -387,16 +428,14 @@ def main():
         st.markdown("### Pipeline Portals")
         if st.button("🌐 Live Domain URL Pipeline", use_container_width=True):
             st.session_state.selected_page = "URL"
-            st.session_state.headline = ""
-            st.session_state.last_summary = ""
+            st.session_state.last_summary = None
             st.rerun()
         if st.button("📝 Raw Text Block Parser", use_container_width=True):
             st.session_state.selected_page = "TEXT"
-            st.session_state.headline = ""
-            st.session_state.last_summary = ""
+            st.session_state.last_summary = None
             st.rerun()
             
-        # Refactored Token Progress Block layout to completely prevent string escaping bugs
+        # Fixed 100% Core Dynamic Progress Tracking Side Panel
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
         
@@ -404,28 +443,31 @@ def main():
         input_pct = (st.session_state.token_metrics["input"] / total_volume * 100) if total_volume > 0 else 0
         output_pct = (st.session_state.token_metrics["output"] / total_volume * 100) if total_volume > 0 else 0
         
-        st.markdown(f"""
-        <div style="background:#111318; border:1px solid #2D3139; border-radius:10px; padding:16px; margin-top:10px;">
-            <div style="margin-bottom:14px;">
-                <div style="display:flex; justify-content:between; font-size:12px; margin-bottom:4px; color:#9CA3AF;">
+        # Fixed: Passed into dedicated sidebar renderer context block
+        st.sidebar.markdown(f"""
+        <div class="token-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar-label">
                     <span>Input Volume Allocation</span>
                     <span>{st.session_state.token_metrics["input"]} tokens</span>
                 </div>
-                <div style="background:#2D3139; border-radius:20px; height:8px; width:100%; overflow:hidden;">
-                    <div style="background:#EF4444; height:100%; border-radius:20px; width:{input_pct}%;"></div>
+                <div class="progress-track">
+                    <div class="progress-fill-red" style="width: {input_pct}%;"></div>
                 </div>
             </div>
-            <div style="margin-bottom:14px;">
-                <div style="display:flex; justify-content:between; font-size:12px; margin-bottom:4px; color:#9CA3AF;">
+            
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar-label">
                     <span>Output Volume Allocation</span>
                     <span>{st.session_state.token_metrics["output"]} tokens</span>
                 </div>
-                <div style="background:#2D3139; border-radius:20px; height:8px; width:100%; overflow:hidden;">
-                    <div style="background:#10B981; height:100%; border-radius:20px; width:{output_pct}%;"></div>
+                <div class="progress-track">
+                    <div class="progress-fill-green" style="width: {output_pct}%;"></div>
                 </div>
             </div>
-            <div style="display:flex; justify-content:between; padding-top:8px; font-size:14px; font-weight:bold; color:#3B82F6; border-top:1px solid #2D3139;">
-                <span>Total Volume</span>
+            
+            <div class="token-row-total">
+                <span>Total Accounted Volume</span>
                 <span>{total_volume}</span>
             </div>
         </div>
