@@ -37,6 +37,8 @@ THEME = {
     "card_border": "#2D3139",            # Modern Gray Trim
     "text_color": "#E1E4EA",             # Clean Off-White
     "accent_color": "#4F46E5",           # Electric Indigo
+    "box_bg": "#1E293B",                 # Deep Indigo-Slate box background
+    "box_border": "#4F46E5",             # Vibrant border accent accentuating the output box
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
@@ -56,8 +58,26 @@ st.markdown(f"""
         margin-bottom: 15px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     }}
+
+    /* 🎨 Premium Colorful Output Box Style */
+    .colorful-summary-box {{
+        padding: 20px;
+        background-color: {THEME['box_bg']};
+        border: 1px solid {THEME['box_border']};
+        border-left: 5px solid {THEME['box_border']};
+        border-radius: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.15);
+    }}
+    .colorful-summary-box p {{
+        color: #F1F5F9 !important;
+        font-size: 15px;
+        line-height: 1.7;
+        margin: 0;
+    }}
     
-    /* Premium Inline Multi-Color Progress Dashboard Components */
+    /* Interactive Dashboard Metrics Box with Color Progress Bars */
     .token-container {{
         background: #111318;
         border: 1px solid {THEME['card_border']};
@@ -72,7 +92,7 @@ st.markdown(f"""
         display: flex;
         justify-content: space-between;
         font-size: 12px;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
         color: #9CA3AF;
     }}
     .progress-legend {{
@@ -286,8 +306,16 @@ def render_output_dashboard(model_used=None):
         </div>
         """, unsafe_allow_html=True)
         
-        # 📋 Analytical Summary Section Accompanied by Top-Right Native Copy Facility
         st.markdown("### 📄 Analytical Synthesis Summary")
+        
+        # Rendering output inside our customized colorful summary box layout
+        st.markdown(f"""
+        <div class="colorful-summary-box">
+            <p>{st.session_state.last_summary}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Native Copy Code Shell containing strictly the summary block context
         st.code(st.session_state.last_summary, language="markdown", wrap_lines=True)
         
         # Actions Row
@@ -444,7 +472,6 @@ def main():
             st.session_state.last_summary = None
             st.rerun()
             
-        # 📊 Secure Sidebar Execution Frame
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
         
