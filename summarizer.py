@@ -23,6 +23,8 @@ if "token_metrics" not in st.session_state:
     st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
 if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
+if "agg_news_data" not in st.session_state:
+    st.session_state.agg_news_data = []
 
 # ---------------------------
 # 🎨 PREMIUM THEME CONFIGURATION
@@ -50,7 +52,6 @@ st.markdown(f"""
         margin-bottom: 25px;
     }}
     
-    /* 🎨 Premium Output Cards matching image_1f44bc.png */
     .headline-card-premium {{
         background: {THEME['card_bg']};
         border: 1px solid {THEME['card_border']};
@@ -89,7 +90,6 @@ st.markdown(f"""
         margin-bottom: 8px;
     }}
     
-    /* Interactive Sidebar Metrics Box with Color Progress Bars */
     .token-container {{
         background: #111318;
         border: 1px solid {THEME['card_border']};
@@ -165,6 +165,35 @@ st.markdown(f"""
         color: #F87171;
         margin: 15px 0;
     }}
+
+    .news-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+        margin-top: 15px;
+    }}
+    .news-card {{
+        background: {THEME['card_bg']};
+        border: 1px solid {THEME['card_border']};
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }}
+    .source-badge {{
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+        padding: 3px 8px;
+        border-radius: 4px;
+        color: #FFF;
+        display: inline-block;
+        margin-bottom: 10px;
+        width: max-content;
+    }}
+    .source-pa {{ background-color: #0284C7; }}
+    .source-tds {{ background-color: #B45309; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -195,11 +224,8 @@ def extract_universal_content(url, custom_class=None):
                 return "\n".join(paragraphs), None
                 
         patterns = {
-            "prothomalo\\.com": ["story-element-text"],
-            "thedailystar\\.net": ["pb-20", "clearfix"],
-            "dw\\.com": ["rich-text"],
-            "tbsnews\\.net": ["section-content"],
-            "mzamin\\.com": ["lh-base"]
+            "prothomalo\\.com": ["story-element-text", "story-elements"],
+            "thedailystar\\.net": ["pb-20", "clearfix", "story-section", "article-content"]
         }
         for pattern, classes in patterns.items():
             if re.search(pattern, url):
@@ -300,12 +326,47 @@ def execute_summary(content, api_key, min_limit, max_limit):
     return None, None, None, f"Cascade Exhausted. Log: {combined_log}"
 
 # ---------------------------
+# Automated Feed Discovery Engine
+# ---------------------------
+def discover_macro_news():
+    feeds = {
+        "Prothom Alo": "https://www.prothomalo.com/feed",
+        "The Daily Star": "https://www.thedailystar.net/frontpage/rss.xml"
+    }
+    discovered_records = []
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    
+    for source, endpoint in feeds.items():
+        try:
+            res = requests.get(endpoint, headers=headers, timeout=10)
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.content, features="xml")
+                items = soup.find_all("item")
+                count = 0
+                for item in items:
+                    if count >= 5:
+                        break
+                    title = item.find("title").get_text(strip=True) if item.find("title") else ""
+                    link = item.find("link").get_text(strip=True) if item.find("link") else ""
+                    if title and link:
+                        discovered_records.append({
+                            "source": source,
+                            "title": title,
+                            "link": link,
+                            "summary": None,
+                            "headline": None
+                        })
+                        count += 1
+        except Exception:
+            continue
+    return discovered_records
+
+# ---------------------------
 # UI Presentation Layer
 # ---------------------------
 def render_output_dashboard(model_used=None):
     if st.session_state.last_summary:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        # Replicated exactly from the design footprint layout in image_1f44bc.png
         st.markdown(f"""
         <div class="headline-card-premium">
             <span class="badge-headline">Generated Flash Headline</span>
@@ -331,7 +392,6 @@ def main():
         st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
         st.caption("Deep-Thinking Universal Core Engine")
         
-        # Fixed 100% Segmented Tracker Panel Layout inside the dark sidebar context
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
         
@@ -339,7 +399,7 @@ def main():
         input_pct = (st.session_state.token_metrics["input"] / total_volume * 100) if total_volume > 0 else 0
         output_pct = (st.session_state.token_metrics["output"] / total_volume * 100) if total_volume > 0 else 0
         
-        st.sidebar.markdown(f"""
+        st.markdown(f"""
         <div class="token-container">
             <div class="progress-bar-wrapper">
                 <div class="progress-bar-label">
@@ -371,8 +431,75 @@ def main():
         st.error(api_err)
         return
 
-    # Tab Navigation Setup Panel
-    tab_url, tab_text = st.tabs(["🌐 Live Domain URL Pipeline", "📝 Raw Text Block Parser"])
+    # Tabs definition
+    tab_auto, tab_url, tab_text = st.tabs([
+        "📰 Automated Regional News Desk", 
+        "🌐 Live Domain URL Pipeline", 
+        "📝 Raw Text Block Parser"
+    ])
+
+    with tab_auto:
+        st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
+        st.markdown("### ⚡ Live Regional Ecosystem Feeds")
+        st.caption("Fetches real-time macro updates (Top 5 items per publication) from Prothom Alo and The Daily Star.")
+        
+        if st.button("🔄 Poll News Ecosystem Feeds", use_container_width=True):
+            with st.spinner("Polling live discovery hubs..."):
+                discovered = discover_macro_news()
+                if not discovered:
+                    st.warning("No new feeds discovered from endpoints.")
+                else:
+                    current_links = {item["link"] for item in st.session_state.agg_news_data}
+                    new_count = 0
+                    for item in reversed(discovered):
+                        if item["link"] not in current_links:
+                            st.session_state.agg_news_data.insert(0, item)
+                            new_count += 1
+                    st.success(f"Ecosystem synced. Added {new_count} newer updates to workspace stack.")
+
+        if st.session_state.agg_news_data:
+            st.markdown('<div class="news-grid">', unsafe_allow_html=True)
+            for index, news in enumerate(st.session_state.agg_news_data):
+                badge_class = "source-pa" if news["source"] == "Prothom Alo" else "source-tds"
+                
+                with st.container():
+                    st.markdown(f"""
+                    <div class="news-card">
+                        <div>
+                            <span class="source-badge {badge_class}">{news['source']}</span>
+                            <h4 style="margin: 0 0 10px 0; font-size:16px; color:#FFF;">{news['title']}</h4>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    c1, c2 = st.columns([3, 1])
+                    with c2:
+                        if st.button("Synthesize", key=f"sys_{index}_{hash(news['link'])}", use_container_width=True):
+                            with st.spinner("Scraping content..."):
+                                content, scrap_err = extract_universal_content(news["link"])
+                                if scrap_err:
+                                    st.error(scrap_err)
+                                elif content:
+                                    hd, sm, active_model, ai_err = execute_summary(content, api_key, 60, 90)
+                                    if ai_err:
+                                        st.error(ai_err)
+                                    else:
+                                        st.session_state.agg_news_data[index]["headline"] = hd
+                                        st.session_state.agg_news_data[index]["summary"] = sm
+                                        st.toast("Analysis successfully synthesized!", icon="✅")
+                    
+                    if news["headline"] and news["summary"]:
+                        st.markdown(f"""
+                        <div style="margin-top:10px; padding:12px; background:#111318; border-radius:6px; border-left:3px solid #10B981;">
+                            <strong style="color:#FFF; display:block; font-size:13px;">⚡ {news['headline']}</strong>
+                            <p style="font-size:12.5px; margin:4px 0 0 0; color:#9CA3AF; line-height:1.5;">{news['summary']}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Ecosystem stack empty. Click 'Poll News Ecosystem Feeds' to synchronize records.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with tab_url:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
@@ -393,7 +520,6 @@ def main():
                 st.session_state.last_summary = None
                 st.session_state.model_used = None
                 st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-                st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
                 st.rerun()
 
         if process_url:
