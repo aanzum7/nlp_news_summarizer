@@ -272,19 +272,12 @@ def read_api_key():
 # ---------------------------
 # Universal Intelligent Link Engine
 # ---------------------------
-def extract_universal_content(url, custom_class=None):
+def extract_universal_content(url):
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         response = requests.get(url, headers=headers, timeout=12)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        if custom_class:
-            paragraphs = []
-            for div in soup.find_all(class_=custom_class):
-                paragraphs.extend([p.get_text(strip=True) for p in div.find_all('p')])
-            if paragraphs:
-                return "\n".join(paragraphs), None
                 
         patterns = {
             "prothomalo\\.com": ["story-element-text"],
@@ -418,7 +411,7 @@ def main():
     api_key, api_err = read_api_key()
     
     with st.sidebar:
-        # 🏛️ Revamped Brand HUD Layout
+        # 🏛️ Brand HUD Layout
         st.markdown("""
         <div class="brand-hud-card">
             <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
@@ -469,13 +462,10 @@ def main():
         st.sidebar.error(api_err)
         return
 
-    # Direct Interface without Navigation Tabs
+    # Direct Interface Area Layout
     st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
     url = st.text_input("Paste a Live News Link:", key="url_input_box", placeholder="Paste any live link here...")
     
-    with st.expander("🛠️ Custom Crawler Target Overrides"):
-        custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
-        
     min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="url_slider")
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -501,7 +491,7 @@ def main():
                 st.toast("Retrieved from workspace cache memory!", icon="💾")
             else:
                 with st.spinner("Analyzing web ecosystem components..."):
-                    content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
+                    content, scrap_err = extract_universal_content(url.strip())
                     if scrap_err:
                         st.error(scrap_err)
                     elif content:
