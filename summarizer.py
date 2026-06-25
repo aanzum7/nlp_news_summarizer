@@ -23,6 +23,8 @@ if "token_metrics" not in st.session_state:
     st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
 if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
+if "preset_url" not in st.session_state:
+    st.session_state.preset_url = ""
 
 # ---------------------------
 # 🎨 PREMIUM THEME CONFIGURATION
@@ -278,7 +280,7 @@ def main():
         o_tok = st.session_state.token_metrics["output"]
         t_tok = st.session_state.token_metrics["total"]
         
-        # 1. Rebranded App Header Identity Block
+        # 1. App Header Identity Block
         st.markdown(f"""
             <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -312,7 +314,7 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        # 3. Dynamic Linked Profile Element Layout with Custom Social Button Grid
+        # 3. Fixed Author Card Layout with Inlined Theme Bounds
         st.markdown(f"""
             <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                 <div class="info-label" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
@@ -322,7 +324,7 @@ def main():
                 <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
                     AI & Data Researcher
                 </div>
-                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; margin-bottom: 12px;'>
+                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4;'>
                     Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
                 </div>
                 
@@ -346,7 +348,31 @@ def main():
     # Workspace Section Layout (Streamlined URL Processor Pipeline)
     st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
     st.subheader("🌐 paste any online news link")
-    url = st.text_input("Target News / Document Article Link:", label_visibility="collapsed", key="url_input_box", placeholder="Paste any live news link here...")
+    
+    # Quick URL Presets for instant user-end testing
+    st.caption("✨ Quick Suggestion Templates (Click to test instantly):")
+    col_p1, col_p2, col_p3, col_p4 = st.columns(4)
+    with col_p1:
+        if st.button("📰 Prothom Alo", use_container_width=True):
+            st.session_state.preset_url = "https://www.prothomalo.com/bangladesh/district/dhaka"
+    with col_p2:
+        if st.button("📰 The Daily Star", use_container_width=True):
+            st.session_state.preset_url = "https://www.thedailystar.net/news/bangladesh"
+    with col_p3:
+        if st.button("📰 TBS News", use_container_width=True):
+            st.session_state.preset_url = "https://www.tbsnews.net/bangladesh"
+    with col_p4:
+        if st.button("📰 DW News", use_container_width=True):
+            st.session_state.preset_url = "https://www.dw.com/en/top-stories/s-9097"
+
+    # Input elements reflecting selected presets dynamically
+    url = st.text_input(
+        "Target News / Document Article Link:", 
+        value=st.session_state.preset_url,
+        label_visibility="collapsed", 
+        key="url_input_box", 
+        placeholder="Paste any live news link here..."
+    )
     
     with st.expander("🛠️ Custom Crawler Target Overrides"):
         custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
@@ -362,6 +388,7 @@ def main():
             st.session_state.headline = None
             st.session_state.last_summary = None
             st.session_state.model_used = None
+            st.session_state.preset_url = ""
             st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
             st.rerun()
 
