@@ -402,7 +402,7 @@ def main():
         st.markdown("""
         <div class="brand-hud-card">
             <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
-            <div class="brand-hud-tag">1Minute  AI News Reade</div>
+            <div class="brand-hud-tag">1Minute  AI News Reader</div>
         </div>
         """, unsafe_allow_html=True)
         
