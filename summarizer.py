@@ -113,6 +113,18 @@ st.markdown(f"""
         background-color: #111318 !important;
         border-right: 1px solid {THEME['card_border']};
     }}
+
+    /* ResearchGate Link Style */
+    .profile-link {{
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }}
+    .profile-link:hover {{
+        opacity: 0.95;
+        transform: translateY(-1px);
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -273,12 +285,7 @@ def main():
         o_tok = st.session_state.token_metrics["output"]
         t_tok = st.session_state.token_metrics["total"]
         
-        # Calculate percentages safely for the visual progress track
-        total_tokens = t_tok if t_tok > 0 else 1
-        input_pct = (i_tok / total_tokens) * 100
-        output_pct = (o_tok / total_tokens) * 100
-        
-        # 1. App Header Identity Block (Rebranded to OneMinute Reader)
+        # 1. App Header Identity Block
         st.markdown(f"""
             <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -291,50 +298,40 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        # 2. Interactive Premium Segmented Counter Block
+        # 2. Reverted Token Metrics Module (Previous Boxed Metadata Layout)
         st.markdown(f"""
             <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 16px;">
-                <div style="font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                    <span>📊</span> Active Token Counters
-                </div>
-                
-                <div style="background: #0F1115; border: 1px solid {THEME['card_border']}; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
-                        <div>
-                            <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight:600; letter-spacing:0.02em;">Token Distribution Mix</div>
-                            <div style="font-size: 22px; font-weight: 700; color: #FFFFFF; margin-top: 2px; line-height:1;">
-                                {t_tok:,} <span style="font-size: 12px; color:#6B7280; font-weight:400; margin-left:2px;">total</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600; padding-bottom: 2px;">
-                            <span style="color: #4F46E5; display: flex; align-items: center; gap: 4px;">● <span style="color:#9CA3AF; font-weight:normal;">In:</span> {i_tok:,}</span>
-                            <span style="color: {THEME['summary_accent']}; display: flex; align-items: center; gap: 4px;">● <span style="color:#9CA3AF; font-weight:normal;">Out:</span> {o_tok:,}</span>
-                        </div>
+                <div class="info-label" style="margin-bottom: 12px;">📊 Current Token Allocation Metrics</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                    <div style="background: #0F1115; padding: 10px; border-radius: 6px; border: 1px solid {THEME['card_border']};">
+                        <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 500;">Input Stream</div>
+                        <div style="font-size: 16px; font-weight: 700; color: #FFFFFF;">{i_tok:,}</div>
                     </div>
-                    
-                    <div style="background: #2D3139; border-radius: 20px; height: 8px; width: 100%; display: flex; overflow: hidden;">
-                        <div style="background: #4F46E5; width: {input_pct}%; height: 100%; transition: width 0.4s ease-in-out;"></div>
-                        <div style="background: {THEME['summary_accent']}; width: {output_pct}%; height: 100%; transition: width 0.4s ease-in-out;"></div>
+                    <div style="background: #0F1115; padding: 10px; border-radius: 6px; border: 1px solid {THEME['card_border']};">
+                        <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 500;">Output Yield</div>
+                        <div style="font-size: 16px; font-weight: 700; color: #FFFFFF;">{o_tok:,}</div>
                     </div>
                 </div>
-        
-                <div style="background: #0F1115; border: 1px solid {THEME['card_border']}; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight:600; letter-spacing:0.02em;">Billed Token Volume</div>
-                    <div style="font-size: 18px; font-weight: 700; color: #FFFFFF;">{t_tok:,}</div>
+                <div style="background: #0F1115; padding: 10px; border-radius: 6px; border: 1px solid {THEME['card_border']}; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 500;">Billed Token Volume</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #FFFFFF;">{t_tok:,}</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
-        # 3. Profile Element Layout
+        # 3. Dynamic Linked Profile Element Layout (ResearchGate Linked)
+        # Note: Replace 'https://www.researchgate.net/profile/Tanvir-Anzum' with your exact profile URL if needed.
         st.markdown(f"""
-            <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);;">
-                <div class="info-label" style="margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+            <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div class="info-label" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                     <span>👨‍💻</span> About the Author
                 </div>
-                <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px;">Tanvir Anzum</div>
-                <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
-                    AI & Data Researcher
-                </div>
+                <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" class="profile-link">
+                    <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 2px;">Tanvir Anzum ↗</div>
+                    <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                        AI & Data Researcher
+                    </div>
+                </a>
                 <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; border-top: 1px solid {THEME['card_border']}; padding-top: 10px;'>
                     Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
                 </div>
