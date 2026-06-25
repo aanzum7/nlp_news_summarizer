@@ -10,7 +10,7 @@ import re
 # ---------------------------
 # ✅ Page Config (Must be First)
 # ---------------------------
-st.set_page_config(page_title="OneMinute Reader | Pro News Dashboard", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="OneMinute News Reader | Pro News Dashboard", page_icon="⚡", layout="wide")
 
 # Initialize Session States
 if "last_summary" not in st.session_state:
@@ -114,16 +114,9 @@ st.markdown(f"""
         border-right: 1px solid {THEME['card_border']};
     }}
 
-    /* ResearchGate Link Style */
-    .profile-link {{
-        text-decoration: none;
-        color: inherit;
-        display: block;
-        transition: transform 0.2s ease, opacity 0.2s ease;
-    }}
-    .profile-link:hover {{
-        opacity: 0.95;
-        transform: translateY(-1px);
+    /* Contact Links Hover State */
+    .social-btn-row a:hover {{
+        opacity: 0.8;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -285,14 +278,14 @@ def main():
         o_tok = st.session_state.token_metrics["output"]
         t_tok = st.session_state.token_metrics["total"]
         
-        # 1. App Header Identity Block
+        # 1. Rebranded App Header Identity Block
         st.markdown(f"""
             <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 18px;">⚡</span>
-                    <h3 style='color:#FFFFFF; margin:0; font-weight:700; font-size: 16px; letter-spacing: -0.02em;'>OneMinute Reader</h3>
+                    <h3 style='color:#FFFFFF; margin:0; font-weight:700; font-size: 15px; letter-spacing: -0.02em;'>InsightInMinutes- OneMinute News Reader</h3>
                 </div>
-                <div style='color:#4F46E5; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top:4px;'>
+                <div style='color:#4F46E5; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top:6px;'>
                     Deep-Thinking Universal Core Engine
                 </div>
             </div>
@@ -319,21 +312,29 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        # 3. Dynamic Linked Profile Element Layout (ResearchGate Linked)
-        # Note: Replace 'https://www.researchgate.net/profile/Tanvir-Anzum' with your exact profile URL if needed.
+        # 3. Dynamic Linked Profile Element Layout with Custom Social Button Grid
         st.markdown(f"""
             <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                 <div class="info-label" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                     <span>👨‍💻</span> About the Author
                 </div>
-                <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" class="profile-link">
-                    <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 2px;">Tanvir Anzum ↗</div>
-                    <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
-                        AI & Data Researcher
-                    </div>
-                </a>
-                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; border-top: 1px solid {THEME['card_border']}; padding-top: 10px;'>
+                <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 2px;">Tanvir Anzum</div>
+                <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                    AI & Data Researcher
+                </div>
+                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; margin-bottom: 12px;'>
                     Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
+                </div>
+                
+                <div class="social-btn-row" style='font-size: 13px; margin-top: 14px; display: flex; gap: 16px; border-top: 1px solid {THEME['card_border']}; padding-top: 12px;'>
+                    <a href="https://www.linkedin.com/in/aanzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" style="vertical-align:middle;">
+                        <strong>LinkedIn</strong>
+                    </a>
+                    <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="14" style="vertical-align:middle; filter: invert(1);">
+                        <strong>Research</strong>
+                    </a>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -344,8 +345,8 @@ def main():
 
     # Workspace Section Layout (Streamlined URL Processor Pipeline)
     st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-    st.subheader("🌐 Live Domain URL Pipeline")
-    url = st.text_input("Target News / Document Article Link:", key="url_input_box", placeholder="Paste any live news link here...")
+    st.subheader("🌐 paste any online news link")
+    url = st.text_input("Target News / Document Article Link:", label_visibility="collapsed", key="url_input_box", placeholder="Paste any live news link here...")
     
     with st.expander("🛠️ Custom Crawler Target Overrides"):
         custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
