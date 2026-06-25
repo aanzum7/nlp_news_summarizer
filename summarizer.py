@@ -328,44 +328,55 @@ def main():
     api_key, api_err = read_api_key()
     
     with st.sidebar:
-        st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
-        st.caption("Deep-Thinking Universal Core Engine")
-        
-        # Fixed 100% Segmented Tracker Panel Layout inside the dark sidebar context
-        st.markdown("---")
-        st.markdown("### 📊 Active Token Counters")
-        
-        total_volume = st.session_state.token_metrics["total"]
-        input_pct = (st.session_state.token_metrics["input"] / total_volume * 100) if total_volume > 0 else 0
-        output_pct = (st.session_state.token_metrics["output"] / total_volume * 100) if total_volume > 0 else 0
-        
-        st.sidebar.markdown(f"""
-        <div class="token-container">
-            <div class="progress-bar-wrapper">
-                <div class="progress-bar-label">
-                    <span>Token Distribution Mix</span>
-                    <span>{total_volume} total</span>
-                </div>
-                <div class="progress-legend">
-                    <div class="legend-item"><span style="color:#EF4444;">●</span> Input ({st.session_state.token_metrics["input"]})</div>
-                    <div class="legend-item"><span style="color:#10B981;">●</span> Output ({st.session_state.token_metrics["output"]})</div>
-                </div>
-                <div class="progress-track-segmented">
-                    <div class="segment-input" style="width: {input_pct}%;"></div>
-                    <div class="segment-output" style="width: {output_pct}%;"></div>
-                </div>
+    # ---------------------------
+    # InsightInMinutes Engine Component
+    # ---------------------------
+    st.markdown(f"""
+        <div style="background: {CONFIG['card_bg']}; border: 1px solid {CONFIG['card_border']}; border-radius: 12px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">🔎</span>
+                <h3 style='color:#FFFFFF; margin:0; font-weight:700; font-size: 16px; letter-spacing: -0.02em;'>InsightInMinutes</h3>
             </div>
-            <div class="token-row-total">
-                <span>Billed Token Volume</span>
-                <span>{total_volume}</span>
+            <div style='color:#4F46E5; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top:4px;'>
+                Deep-Thinking Universal Core Engine
             </div>
         </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        st.title("👨‍💻 About the Author")
-        st.caption("Tanvir Anzum – AI & Data Researcher")
-        st.markdown("<div style='font-size:14px; color:#9CA3AF;'>Passionate about turning data into insights.</div>", unsafe_allow_html=True)
+    
+        <div style="background: {CONFIG['card_bg']}; border: 1px solid {CONFIG['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 16px;">
+            <div class="info-label" style="margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                <span>📊</span> Active Token Counters
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0F1115; border: 1px solid {CONFIG['card_border']}; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <div style="text-align: left;">
+                    <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight:600;">Token Distribution Mix</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">0 <span style="font-size: 12px; color:#6B7280; font-weight:normal;">total</span></div>
+                </div>
+                <div style="display: flex; gap: 12px; font-size: 12px; font-weight: 600;">
+                    <span style="color: #4F46E5;">● Input (0)</span>
+                    <span style="color: {CONFIG['success_color']};">● Output (0)</span>
+                </div>
+            </div>
+    
+            <div style="background: #0F1115; border: 1px solid {CONFIG['card_border']}; border-radius: 8px; padding: 12px;">
+                <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight:600;">Billed Token Volume</div>
+                <div style="font-size: 22px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">0</div>
+            </div>
+        </div>
+    
+        <div style="background: {CONFIG['card_bg']}; border: 1px solid {CONFIG['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div class="info-label" style="margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+                <span>👨‍💻</span> About the Author
+            </div>
+            <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px;">Tanvir Anzum</div>
+            <div style="font-size: 11px; font-weight: 600; color: {CONFIG['success_color']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                AI & Data Researcher
+            </div>
+            <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; border-top: 1px solid {CONFIG['card_border']}; padding-top: 10px;'>
+                Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
     if api_err:
         st.error(api_err)
