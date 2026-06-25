@@ -314,32 +314,33 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        # 3. Fixed Author Card Layout with Inlined Theme Bounds
-        st.markdown(f"""
-            <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                <div class="info-label" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                    <span>👨‍💻</span> About the Author
+        st.markdown("---")
+            
+            # Matching Author Profile Card
+            st.markdown(f"""
+                <div style="background: {CONFIG['card_bg']}; border: 1px solid {CONFIG['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <div class="info-label" style="margin-bottom: 2px;">Project Architect</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 8px;">Tanvir Anzum</div>
+                    <div style="font-size: 11px; font-weight: 600; color: {CONFIG['success_color']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                        🧬 AI & Data Researcher
+                    </div>
+                    <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; border-top: 1px solid {CONFIG['card_border']}; padding-top: 10px;'>
+                        Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
+                    </div>
+                    <div style='font-size: 13px; margin-top: 14px; display: flex; gap: 16px; border-top: 1px solid {CONFIG['card_border']}; padding-top: 12px;'>
+                        <a href="https://www.linkedin.com/in/aanzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" style="vertical-align:middle;">
+                            <strong>LinkedIn</strong>
+                        </a>
+                        <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="14" style="vertical-align:middle; filter: invert(1);">
+                            <strong>Research</strong>
+                        </a>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 2px;">Tanvir Anzum</div>
-                <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
-                    AI & Data Researcher
-                </div>
-                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4;'>
-                    Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
-                </div>
-                
-                <div class="social-btn-row" style='font-size: 13px; margin-top: 14px; display: flex; gap: 16px; border-top: 1px solid {THEME['card_border']}; padding-top: 12px;'>
-                    <a href="https://www.linkedin.com/in/aanzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
-                        <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" style="vertical-align:middle;">
-                        <strong>LinkedIn</strong>
-                    </a>
-                    <a href="https://www.researchgate.net/profile/Tanvir-Anzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/ResearchGate_icon_SVG.svg" alt="ResearchGate" width="14" style="vertical-align:middle; filter: invert(1);">
-                        <strong>Research</strong>
-                    </a>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            
+            st.markdown("---")
 
     if api_err:
         st.error(api_err)
