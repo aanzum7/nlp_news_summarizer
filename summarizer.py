@@ -25,20 +25,22 @@ if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
 
 # ---------------------------
-# 🎨 PREMIUM THEME CONFIGURATION
+# 🎨 PREMIUM CYAN-INDIGO HUD THEME CONFIGURATION
 # ---------------------------
 THEME = {
-    "background_color": "#0F1115",       # Rich Slate Dark
-    "card_bg": "#1A1D24",                # Charcoal Panel
-    "card_border": "#2D3139",            # Modern Gray Trim
-    "text_color": "#E1E4EA",             # Clean Off-White
-    "accent_color": "#4F46E5",           # Electric Indigo
-    "summary_accent": "#10B981",          # Emerald Green Accent
+    "background_color": "#0A0C10",       # Deep Void Space
+    "sidebar_bg": "#0F1219",             # Matte Slate Panel
+    "card_bg": "#141923",                # Deep Tech Core Card
+    "card_border": "#222A3A",            # Neon Subdued Border
+    "text_color": "#E2E8F0",             # Bright Titanium Text
+    "accent_color": "#6366F1",           # Electric Indigo Spark
+    "summary_accent": "#06B6D4",          # Cyber Cyan Synthesis
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
 
 st.markdown(f"""
 <style>
+    /* Global Core Reset & Styling */
     html, body, [data-testid="stAppViewContainer"] {{
         background-color: {THEME['background_color']};
         font-family: {THEME['font_family']};
@@ -50,52 +52,61 @@ st.markdown(f"""
         margin-bottom: 25px;
     }}
     
-    /* 🎨 Premium Output Cards */
+    /* 🧬 Premium Output HUD Cards */
     .headline-card-premium {{
         background: {THEME['card_bg']};
         border: 1px solid {THEME['card_border']};
-        border-left: 5px solid {THEME['accent_color']};
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 15px;
+        border-left: 6px solid {THEME['accent_color']};
+        border-radius: 14px;
+        padding: 26px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.15);
     }}
     
     .summary-card-premium {{
         background: {THEME['card_bg']};
         border: 1px solid {THEME['card_border']};
-        border-left: 5px solid {THEME['summary_accent']};
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 15px;
+        border-left: 6px solid {THEME['summary_accent']};
+        border-radius: 14px;
+        padding: 26px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.15);
     }}
     
     .badge-headline {{
-        font-size: 11px;
+        font-size: 10px;
         text-transform: uppercase;
-        font-weight: 600;
+        font-weight: 700;
         color: {THEME['accent_color']};
-        letter-spacing: 0.05em;
-        display: block;
-        margin-bottom: 8px;
+        letter-spacing: 0.08em;
+        display: inline-block;
+        margin-bottom: 10px;
+        background: rgba(99, 102, 241, 0.12);
+        padding: 2px 8px;
+        border-radius: 4px;
     }}
     
     .badge-summary {{
-        font-size: 11px;
+        font-size: 10px;
         text-transform: uppercase;
-        font-weight: 600;
+        font-weight: 700;
         color: {THEME['summary_accent']};
-        letter-spacing: 0.05em;
-        display: block;
-        margin-bottom: 8px;
+        letter-spacing: 0.08em;
+        display: inline-block;
+        margin-bottom: 10px;
+        background: rgba(6, 182, 212, 0.12);
+        padding: 2px 8px;
+        border-radius: 4px;
     }}
     
-    /* Interactive Sidebar Metrics Box with Color Progress Bars */
+    /* 📊 Next-Gen Sidebar Analytics Module */
     .token-container {{
-        background: #111318;
+        background: #0B0E14;
         border: 1px solid {THEME['card_border']};
-        border-radius: 10px;
-        padding: 16px;
-        margin-top: 10px;
+        border-radius: 12px;
+        padding: 18px;
+        margin-top: 15px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
     }}
     .progress-bar-wrapper {{
         margin-bottom: 14px;
@@ -103,67 +114,94 @@ st.markdown(f"""
     .progress-bar-label {{
         display: flex;
         justify-content: space-between;
-        font-size: 12px;
-        margin-bottom: 4px;
-        color: #9CA3AF;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
     }}
     .progress-legend {{
         display: flex;
-        gap: 12px;
+        justify-content: space-between;
         font-size: 11px;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+        background: rgba(255,255,255,0.02);
+        padding: 6px;
+        border-radius: 6px;
     }}
     .legend-item {{
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
+        color: #CBD5E1;
     }}
     .progress-track-segmented {{
-        background: #2D3139;
-        border-radius: 20px;
-        height: 10px;
+        background: #1E293B;
+        border-radius: 30px;
+        height: 8px;
         width: 100%;
         display: flex;
         overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
     }}
-    .segment-input {{ background: #EF4444; height: 100%; transition: width 0.6s ease-in-out; }}
-    .segment-output {{ background: #10B981; height: 100%; transition: width 0.6s ease-in-out; }}
+    .segment-input {{ background: #EF4444; height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 8px #EF4444; }}
+    .segment-output {{ background: {THEME['summary_accent']}; height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 8px {THEME['summary_accent']}; }}
     
     .token-row-total {{
         display: flex;
         justify-content: space-between;
-        padding-top: 8px;
-        font-size: 14px;
-        font-weight: bold;
-        color: #3B82F6;
-        border-top: 1px solid #2D3139;
+        padding-top: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #38BDF8;
+        border-top: 1px solid #1E293B;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
     }}
     
+    /* Structural Typography Overrides */
     h1, h2, h3, h4, h5 {{
         font-weight: 700;
         color: #FFFFFF;
+        letter-spacing: -0.02em;
     }}
     
+    /* Form Element Architecture overrides */
     .stTextArea textarea, .stTextInput>div>input {{
         background-color: {THEME['card_bg']} !important;
         border: 1px solid {THEME['card_border']} !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         color: {THEME['text_color']} !important;
+        transition: all 0.2s ease-in-out;
+    }}
+    .stTextArea textarea:focus, .stTextInput>div>input:focus {{
+        border-color: {THEME['accent_color']} !important;
+        box-shadow: 0 0 0 1px {THEME['accent_color']} !important;
     }}
     
+    /* Sidebar Shell Overlays */
     [data-testid="stSidebar"] {{
-        background-color: #111318 !important;
+        background-color: {THEME['sidebar_bg']} !important;
         border-right: 1px solid {THEME['card_border']};
     }}
-
-    .terminal-card {{
-        background: #1E1E24;
-        border-left: 4px solid #EF4444;
-        padding: 18px;
+    
+    /* Main Tabs Refinement */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 8px;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        background-color: transparent;
+        border: 1px solid transparent;
+        padding: 8px 16px;
         border-radius: 8px;
-        font-family: monospace;
-        color: #F87171;
-        margin: 15px 0;
+        color: #94A3B8;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: {THEME['card_bg']} !important;
+        border-color: {THEME['card_border']} !important;
+        color: #FFFFFF !important;
+        font-weight: 600;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -340,12 +378,11 @@ def main():
         <div class="token-container">
             <div class="progress-bar-wrapper">
                 <div class="progress-bar-label">
-                    <span>Token Distribution Mix</span>
-                    <span>{total_volume} total</span>
+                    <span>Telemetry Allocation Mix</span>
                 </div>
                 <div class="progress-legend">
-                    <div class="legend-item"><span style="color:#EF4444;">●</span> Input ({st.session_state.token_metrics["input"]})</div>
-                    <div class="legend-item"><span style="color:#10B981;">●</span> Output ({st.session_state.token_metrics["output"]})</div>
+                    <div class="legend-item"><span style="color:#EF4444;">●</span> In ({st.session_state.token_metrics["input"]})</div>
+                    <div class="legend-item"><span style="color:{THEME['summary_accent']};">●</span> Out ({st.session_state.token_metrics["output"]})</div>
                 </div>
                 <div class="progress-track-segmented">
                     <div class="segment-input" style="width: {input_pct}%;"></div>
@@ -353,14 +390,14 @@ def main():
                 </div>
             </div>
             <div class="token-row-total">
-                <span>Billed Token Volume</span>
+                <span>Total Billed Volume</span>
                 <span>{total_volume}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     if api_err:
-        st.error(api_err)
+        st.sidebar.error(api_err)
         return
 
     # Tab Navigation Setup Panel
