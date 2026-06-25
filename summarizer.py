@@ -105,7 +105,7 @@ st.markdown(f"""
         border: 1px solid {THEME['card_border']};
         border-radius: 12px;
         padding: 18px;
-        margin-top: 15px;
+        margin-top: 5px;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
     }}
     .progress-bar-wrapper {{
@@ -114,12 +114,12 @@ st.markdown(f"""
     .progress-bar-label {{
         display: flex;
         justify-content: space-between;
-        font-size: 11px;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #94A3B8;
+        font-size: 11.5px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #38BDF8;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.05em;
     }}
     .progress-legend {{
         display: flex;
@@ -256,24 +256,6 @@ st.markdown(f"""
     [data-testid="stSidebar"] {{
         background-color: {THEME['sidebar_bg']} !important;
         border-right: 1px solid {THEME['card_border']};
-    }}
-    
-    /* Main Tabs Refinement */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 8px;
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        background-color: transparent;
-        border: 1px solid transparent;
-        padding: 8px 16px;
-        border-radius: 8px;
-        color: #94A3B8;
-    }}
-    .stTabs [aria-selected="true"] {{
-        background-color: {THEME['card_bg']} !important;
-        border-color: {THEME['card_border']} !important;
-        color: #FFFFFF !important;
-        font-weight: 600;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -444,9 +426,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.markdown("### 📊 Active Token Counters")
-        
+        # 📊 Embedded Active Token Counters Module
         total_volume = st.session_state.token_metrics["total"]
         input_pct = (st.session_state.token_metrics["input"] / total_volume * 100) if total_volume > 0 else 0
         output_pct = (st.session_state.token_metrics["output"] / total_volume * 100) if total_volume > 0 else 0
@@ -455,7 +435,7 @@ def main():
         <div class="token-container">
             <div class="progress-bar-wrapper">
                 <div class="progress-bar-label">
-                    <span>Telemetry Allocation Mix</span>
+                    <span>Active Token Counters</span>
                 </div>
                 <div class="progress-legend">
                     <div class="legend-item"><span style="color:#EF4444;">●</span> In ({st.session_state.token_metrics["input"]})</div>
@@ -489,89 +469,43 @@ def main():
         st.sidebar.error(api_err)
         return
 
-    # Tab Navigation Setup Panel
-    tab_url, tab_text = st.tabs(["🌐 Live Domain URL Pipeline", "📝 Raw Text Block Parser"])
-
-    with tab_url:
-        st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        url = st.text_input("Target News / Document Article Link:", key="url_input_box", placeholder="Paste any live link here...")
+    # Direct Interface without Navigation Tabs
+    st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
+    url = st.text_input("Paste a Live News Link:", key="url_input_box", placeholder="Paste any live link here...")
+    
+    with st.expander("🛠️ Custom Crawler Target Overrides"):
+        custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
         
-        with st.expander("🛠️ Custom Crawler Target Overrides"):
-            custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
-            
-        min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="url_slider")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        b_col1, b_col2 = st.columns([4, 1])
-        with b_col1:
-            process_url = st.button("🚀 Process Domain Insights", use_container_width=True, key="url_run_btn")
-        with b_col2:
-            if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_url_action"):
-                st.session_state.headline = None
-                st.session_state.last_summary = None
-                st.session_state.model_used = None
-                st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-                st.rerun()
+    min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="url_slider")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    b_col1, b_col2 = st.columns([4, 1])
+    with b_col1:
+        process_url = st.button("🚀 Process Domain Insights", use_container_width=True, key="url_run_btn")
+    with b_col2:
+        if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_url_action"):
+            st.session_state.headline = None
+            st.session_state.last_summary = None
+            st.session_state.model_used = None
+            st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
+            st.rerun()
 
-        if process_url:
-            if url.strip():
-                cache_key = f"url_{url.strip()}_{min_limit}_{max_limit}"
-                if cache_key in st.session_state.cache_vault:
-                    cached_data = st.session_state.cache_vault[cache_key]
-                    st.session_state.headline = cached_data["headline"]
-                    st.session_state.last_summary = cached_data["summary"]
-                    st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
-                    st.toast("Retrieved from workspace cache memory!", icon="💾")
-                else:
-                    with st.spinner("Analyzing web ecosystem components..."):
-                        content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
-                        if scrap_err:
-                            st.error(scrap_err)
-                        elif content:
-                            hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
-                            if ai_err:
-                                st.error(ai_err)
-                            else:
-                                st.session_state.headline = hd
-                                st.session_state.last_summary = sm
-                                st.session_state.model_used = active_model
-                                st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
-                                st.rerun()
+    if process_url:
+        if url.strip():
+            cache_key = f"url_{url.strip()}_{min_limit}_{max_limit}"
+            if cache_key in st.session_state.cache_vault:
+                cached_data = st.session_state.cache_vault[cache_key]
+                st.session_state.headline = cached_data["headline"]
+                st.session_state.last_summary = cached_data["summary"]
+                st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
+                st.toast("Retrieved from workspace cache memory!", icon="💾")
             else:
-                st.warning("Please specify an active article link pointer.")
-
-        render_output_dashboard(st.session_state.get("model_used"))
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with tab_text:
-        st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        raw_text = st.text_area("Pro Text Matrix Dropzone Area Block:", key="text_input_box", height=250, placeholder="Paste text copy blocks directly into this zone area...")
-        
-        min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="text_slider")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        b_col1, b_col2 = st.columns([4, 1])
-        with b_col1:
-            process_text = st.button("🚀 Synthesize Textual Blocks", use_container_width=True, key="text_run_btn")
-        with b_col2:
-            if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_text_action"):
-                st.session_state.headline = None
-                st.session_state.last_summary = None
-                st.session_state.model_used = None
-                st.session_state.token_metrics = {"input": 0, "output": 0, "total": 0}
-                st.rerun()
-
-        if process_text:
-            if raw_text.strip():
-                cache_key = f"text_{hash(raw_text.strip())}_{min_limit}_{max_limit}"
-                if cache_key in st.session_state.cache_vault:
-                    cached_data = st.session_state.cache_vault[cache_key]
-                    st.session_state.headline = cached_data["headline"]
-                    st.session_state.last_summary = cached_data["summary"]
-                    st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
-                else:
-                    with st.spinner("Processing sequence matrix inputs..."):
-                        hd, sm, active_model, ai_err = execute_summary(raw_text.strip(), api_key, min_limit, max_limit)
+                with st.spinner("Analyzing web ecosystem components..."):
+                    content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
+                    if scrap_err:
+                        st.error(scrap_err)
+                    elif content:
+                        hd, sm, active_model, ai_err = execute_summary(content, api_key, min_limit, max_limit)
                         if ai_err:
                             st.error(ai_err)
                         else:
@@ -580,11 +514,11 @@ def main():
                             st.session_state.model_used = active_model
                             st.session_state.cache_vault[cache_key] = {"headline": hd, "summary": sm, "model": active_model}
                             st.rerun()
-            else:
-                st.warning("Please supply valid inputs into character map buffers.")
+        else:
+            st.warning("Please specify an active article link pointer.")
 
-        render_output_dashboard(st.session_state.get("model_used"))
-        st.markdown('</div>', unsafe_allow_html=True)
+    render_output_dashboard(st.session_state.get("model_used"))
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
