@@ -29,11 +29,11 @@ if "cache_vault" not in st.session_state:
 # ---------------------------
 THEME = {
     "background_color": "#0A0C10",       # Deep Void Space
-    "sidebar_bg": "#0F1219",             # Matte Slate Panel
-    "card_bg": "#141923",                # Deep Tech Core Card
-    "card_border": "#222A3A",            # Neon Subdued Border
-    "text_color": "#E2E8F0",             # Bright Titanium Text
-    "accent_color": "#6366F1",           # Electric Indigo Spark
+    "sidebar_bg": "#0F1219",              # Matte Slate Panel
+    "card_bg": "#141923",                 # Deep Tech Core Card
+    "card_border": "#222A3A",             # Neon Subdued Border
+    "text_color": "#E2E8F0",              # Bright Titanium Text
+    "accent_color": "#6366F1",            # Electric Indigo Spark
     "summary_accent": "#06B6D4",          # Cyber Cyan Synthesis
     "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 }
@@ -210,27 +210,6 @@ st.markdown(f"""
         margin-bottom: 12px;
         display: block;
     }}
-    .author-name-text {{
-        font-size: 15px;
-        font-weight: 700;
-        color: #F8FAFC;
-        margin-bottom: 2px;
-    }}
-    .author-role-tag {{
-        font-size: 12px;
-        color: #06B6D4;
-        font-weight: 500;
-        margin-bottom: 10px;
-    }}
-    .author-bio-quote {{
-        font-size: 12.5px;
-        color: #94A3B8;
-        line-height: 1.5;
-        font-style: italic;
-        border-left: 2px solid #334155;
-        padding-left: 8px;
-        margin: 8px 0 0 0;
-    }}
     
     /* Structural Typography Overrides */
     h1, h2, h3, h4, h5 {{
@@ -362,15 +341,9 @@ def execute_summary(content, api_key, min_limit, max_limit):
     for model_meta in model_cascade_pool:
         current_model = model_meta["name"]
         try:
-            if model_meta["supports_thinking"]:
-                generate_config = types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=1024),
-                    tools=[types.Tool(googleSearch=types.GoogleSearch())]
-                )
-            else:
-                generate_config = types.GenerateContentConfig(
-                    tools=[types.Tool(googleSearch=types.GoogleSearch())]
-                )
+            generate_config = types.GenerateContentConfig(
+                tools=[types.Tool(googleSearch=types.GoogleSearch())]
+            )
                 
             response = client.models.generate_content(
                 model=current_model,
@@ -473,18 +446,20 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # 📚 Editorial / Book Recommender-Style Author Module
+        st.markdown("---")
+        
+        # 📚 Fixed Editorial Author Module using valid THEME keys mapping
         st.markdown(f"""
-            <div style="background: {CONFIG['card_bg']}; border: 1px solid {CONFIG['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="background: {THEME['card_bg']}; border: 1px solid {THEME['card_border']}; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                 <div class="info-label" style="margin-bottom: 2px;">Project Architect</div>
                 <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 8px;">Tanvir Anzum</div>
-                <div style="font-size: 11px; font-weight: 600; color: {CONFIG['success_color']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 600; color: {THEME['summary_accent']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
                     🧬 AI & Data Researcher
                 </div>
-                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; border-top: 1px solid {CONFIG['card_border']}; padding-top: 10px;'>
+                <div style='font-size: 13px; color: #9CA3AF; line-height: 1.4; border-top: 1px solid {THEME['card_border']}; padding-top: 10px;'>
                     Passionate about turning <strong>data into insights</strong> and building <strong>AI-powered tools</strong> for real-world impact.
                 </div>
-                <div style='font-size: 13px; margin-top: 14px; display: flex; gap: 16px; border-top: 1px solid {CONFIG['card_border']}; padding-top: 12px;'>
+                <div style='font-size: 13px; margin-top: 14px; display: flex; gap: 16px; border-top: 1px solid {THEME['card_border']}; padding-top: 12px;'>
                     <a href="https://www.linkedin.com/in/aanzum" target="_blank" style="text-decoration: none; color: #FFFFFF; display: flex; align-items: center; gap: 6px;">
                         <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" style="vertical-align:middle;">
                         <strong>LinkedIn</strong>
@@ -496,6 +471,8 @@ def main():
                 </div>
             </div>
         """, unsafe_allow_html=True)
+        
+        st.markdown("---")
 
     if api_err:
         st.sidebar.error(api_err)
@@ -506,7 +483,8 @@ def main():
 
     with tab_url:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        url = st.text_input("Target News / Document Article Link:", key="url_input_box", placeholder="Paste any live link here...")
+        st.subheader("🌐 Paste any news link to extract key insights instantly")
+        url = st.text_input("Target News / Document Article Link:", label_visibility="collapsed", key="url_input_box", placeholder="Paste any live link here...")
         
         with st.expander("🛠️ Custom Crawler Target Overrides"):
             custom_class = st.text_input("Explicit Content CSS Selector Override Tag:", placeholder="e.g. story-element-text")
@@ -597,6 +575,7 @@ def main():
 
         render_output_dashboard(st.session_state.get("model_used"))
         st.markdown('</div>', unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
