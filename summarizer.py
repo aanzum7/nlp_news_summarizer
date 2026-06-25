@@ -472,7 +472,7 @@ def main():
 
     with tab_url:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        st.subheader("🌐 Paste any news link to get ai insights instantly")
+        st.subheader("🌐 Paste any news link to get AI insights instantly")
         url = st.text_input("Target News / Document Article Link:", label_visibility="collapsed", key="url_input_box", placeholder="Paste any live link here...")
         
         with st.expander("🛠️ Custom Crawler Target Overrides"):
