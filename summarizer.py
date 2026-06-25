@@ -25,7 +25,7 @@ if "cache_vault" not in st.session_state:
     st.session_state.cache_vault = {}
 
 # ---------------------------
-# 🎨 PREMIUM CYAN-INDIGO HUD THEME CONFIGURATION
+# 🎨 PREMIUM COCKPIT & LITERARY CARD THEME
 # ---------------------------
 THEME = {
     "background_color": "#0A0C10",       # Deep Void Space
@@ -160,6 +160,78 @@ st.markdown(f"""
         letter-spacing: 0.02em;
     }}
     
+    /* 🏛️ Book Recommender-Style Literary Cards */
+    .brand-hud-card {{
+        background: linear-gradient(135deg, #181E2C 0%, #10141D 100%);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        border-radius: 12px;
+        padding: 18px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }}
+    .brand-hud-title {{
+        font-size: 20px !important;
+        font-weight: 800 !important;
+        background: linear-gradient(90deg, #FFFFFF, #93C5FD);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0 0 4px 0 !important;
+        letter-spacing: -0.03em;
+    }}
+    .brand-hud-tag {{
+        font-size: 11px;
+        color: #38BDF8;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+    }}
+    
+    .author-literary-card {{
+        background: #131722;
+        border: 1px solid #232A3C;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 25px;
+        position: relative;
+    }}
+    .author-literary-card::before {{
+        content: '';
+        position: absolute;
+        top: 0; left: 15px; right: 15px; height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+    }}
+    .author-header-label {{
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #64748B;
+        margin-bottom: 12px;
+        display: block;
+    }}
+    .author-name-text {{
+        font-size: 15px;
+        font-weight: 700;
+        color: #F8FAFC;
+        margin-bottom: 2px;
+    }}
+    .author-role-tag {{
+        font-size: 12px;
+        color: #06B6D4;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }}
+    .author-bio-quote {{
+        font-size: 12.5px;
+        color: #94A3B8;
+        line-height: 1.5;
+        font-style: italic;
+        border-left: 2px solid #334155;
+        padding-left: 8px;
+        margin: 8px 0 0 0;
+    }}
+    
     /* Structural Typography Overrides */
     h1, h2, h3, h4, h5 {{
         font-weight: 700;
@@ -167,7 +239,7 @@ st.markdown(f"""
         letter-spacing: -0.02em;
     }}
     
-    /* Form Element Architecture overrides */
+    /* Form Element Architecture */
     .stTextArea textarea, .stTextInput>div>input {{
         background-color: {THEME['card_bg']} !important;
         border: 1px solid {THEME['card_border']} !important;
@@ -364,8 +436,13 @@ def main():
     api_key, api_err = read_api_key()
     
     with st.sidebar:
-        st.markdown("<h2 style='text-align:left; color:#FFF; margin-bottom:0;'>🔎 InsightInMinutes</h2>", unsafe_allow_html=True)
-        st.caption("Deep-Thinking Universal Core Engine")
+        # 🏛️ Revamped Brand HUD Layout
+        st.markdown("""
+        <div class="brand-hud-card">
+            <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
+            <div class="brand-hud-tag">Universal Core Engine</div>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
         st.markdown("### 📊 Active Token Counters")
@@ -393,6 +470,18 @@ def main():
                 <span>Total Billed Volume</span>
                 <span>{total_volume}</span>
             </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 📚 Editorial / Book Recommender-Style Author Module
+        st.markdown("""
+        <div class="author-literary-card">
+            <span class="author-header-label">Curator Profile</span>
+            <div class="author-name-text">Tanvir Anzum</div>
+            <div class="author-role-tag">AI & Data Researcher</div>
+            <p class="author-bio-quote">
+                "Passionate about synthesis systems, cross-domain telemetry processing, and turning raw structured matrix vectors into human insights."
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
