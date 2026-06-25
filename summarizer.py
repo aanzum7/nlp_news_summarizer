@@ -10,7 +10,7 @@ import re
 # ---------------------------
 # ✅ Page Config (Must be First)
 # ---------------------------
-st.set_page_config(page_title="InsightInMinutes | Pro News Dashboard", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="InsightInMinutes | 1Minute AI News Reader", page_icon="🔎", layout="wide")
 
 # Initialize Session States
 if "last_summary" not in st.session_state:
@@ -402,7 +402,7 @@ def main():
         st.markdown("""
         <div class="brand-hud-card">
             <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
-            <div class="brand-hud-tag">OneMinute AI Reader</div>
+            <div class="brand-hud-tag">1Minute  AI News Reade</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -502,7 +502,7 @@ def main():
                     st.session_state.model_used = cached_data["model"] + " (Cached Memory)"
                     st.toast("Retrieved from workspace cache memory!", icon="💾")
                 else:
-                    with st.spinner("Analyzing web ecosystem components..."):
+                    with st.spinner("Generating Insights!..."):
                         content, scrap_err = extract_universal_content(url.strip(), custom_class=custom_class.strip())
                         if scrap_err:
                             st.error(scrap_err)
