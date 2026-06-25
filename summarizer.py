@@ -413,7 +413,7 @@ def main():
         st.markdown("""
         <div class="brand-hud-card">
             <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
-            <div class="brand-hud-tag">OneMinute AI Reader</div>
+            <div class="brand-hud-tag">1Minute AI Reader</div>
         </div>
         """, unsafe_allow_html=True)
         
