@@ -358,11 +358,6 @@ def main():
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        st.title("👨‍💻 About the Author")
-        st.caption("Tanvir Anzum – AI & Data Researcher")
-        st.markdown("<div style='font-size:14px; color:#9CA3AF;'>Passionate about turning data into insights.</div>", unsafe_allow_html=True)
 
     if api_err:
         st.error(api_err)
