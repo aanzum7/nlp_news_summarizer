@@ -187,30 +187,6 @@ st.markdown(f"""
         letter-spacing: 0.1em;
     }}
     
-    .author-literary-card {{
-        background: #131722;
-        border: 1px solid #232A3C;
-        border-radius: 12px;
-        padding: 16px;
-        margin-top: 25px;
-        position: relative;
-    }}
-    .author-literary-card::before {{
-        content: '';
-        position: absolute;
-        top: 0; left: 15px; right: 15px; height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
-    }}
-    .author-header-label {{
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: #64748B;
-        margin-bottom: 12px;
-        display: block;
-    }}
-    
     /* Structural Typography Overrides */
     h1, h2, h3, h4, h5 {{
         font-weight: 700;
@@ -330,10 +306,15 @@ def execute_summary(content, api_key, min_limit, max_limit):
         f"Text:\n{content}"
     )
 
+    # All possible free-tier models included in order of architectural preference
     model_cascade_pool = [
-        {"name": "gemini-2.5-flash", "supports_thinking": False},
-        {"name": "gemini-2.5-flash-lite", "supports_thinking": False},
-        {"name": "gemini-2.0-flash", "supports_thinking": False}
+        {"name": "gemini-2.5-flash"},
+        {"name": "gemini-2.5-flash-lite"},
+        {"name": "gemini-2.5-pro"},
+        {"name": "gemini-2.0-flash"},
+        {"name": "gemini-2.0-pro-exp-02-05"},
+        {"name": "gemini-2.5-pro-preview-05-26"},
+        {"name": "gemini-2.5-flash-preview-05-26"}
     ]
     
     collected_errors = []
@@ -375,11 +356,19 @@ def execute_summary(content, api_key, min_limit, max_limit):
                 return headline, summary_body, current_model, None
                 
         except Exception as e:
-            collected_errors.append(f"{current_model}: {str(e)}")
+            err_msg = str(e)
+            if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                match = re.search(r"retry in ([\d\.]+)s", err_msg)
+                wait_time = f" {int(float(match.group(1)))} seconds" if match else " 1 minute"
+                collected_errors.append(f"System traffic limits reached. Please try again in{wait_time}.")
+            elif "503" in err_msg or "UNAVAILABLE" in err_msg:
+                collected_errors.append("AI clusters are currently busy. Please try again in 1–2 minutes.")
+            else:
+                collected_errors.append("Processing cluster hit a temporary turnaround threshold.")
             continue
             
-    combined_log = " | ".join(collected_errors)
-    return None, None, None, f"Cascade Exhausted. Log: {combined_log}"
+    friendly_msg = " | ".join(list(set(collected_errors)))
+    return None, None, None, friendly_msg
 
 # ---------------------------
 # UI Presentation Layer
@@ -413,7 +402,7 @@ def main():
         st.markdown("""
         <div class="brand-hud-card">
             <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
-            <div class="brand-hud-tag">1Minute AI Reader</div>
+            <div class="brand-hud-tag">OneMinute AI Reader</div>
         </div>
         """, unsafe_allow_html=True)
         
