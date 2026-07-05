@@ -531,7 +531,7 @@ def main():
         
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
-            process_text = st.button("🚀 Synthesize Textual Blocks", use_container_width=True, key="text_run_btn")
+            process_text = st.button("Generate Summary! ✨", use_container_width=True, key="text_run_btn")
         with b_col2:
             if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_text_action"):
                 st.session_state.headline = None
