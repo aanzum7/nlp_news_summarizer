@@ -406,9 +406,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.markdown("### 📊 Active Token Counters")
-        
+        st.markdown("---")        
         total_volume = st.session_state.token_metrics["total"]
         input_pct = (st.session_state.token_metrics["input"] / total_volume * 100) if total_volume > 0 else 0
         output_pct = (st.session_state.token_metrics["output"] / total_volume * 100) if total_volume > 0 else 0
@@ -417,7 +415,7 @@ def main():
         <div class="token-container">
             <div class="progress-bar-wrapper">
                 <div class="progress-bar-label">
-                    <span>Telemetry Allocation Mix</span>
+                    <span>Active Token Counters</span>
                 </div>
                 <div class="progress-legend">
                     <div class="legend-item"><span style="color:#EF4444;">●</span> In ({st.session_state.token_metrics["input"]})</div>
