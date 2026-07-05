@@ -468,7 +468,7 @@ def main():
         return
 
     # Tab Navigation Setup Panel
-    tab_url, tab_text = st.tabs(["🌐 Live Domain URL Pipeline", "📝 Raw Text Block Parser"])
+    tab_url, tab_text = st.tabs(["1Min AI Reader 🗞️", "AI Text Summarizer ⭐"])
 
     with tab_url:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
