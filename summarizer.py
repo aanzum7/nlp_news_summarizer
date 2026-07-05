@@ -483,7 +483,7 @@ def main():
         
         b_col1, b_col2 = st.columns([4, 1])
         with b_col1:
-            process_url = st.button("🚀 Process Domain Insights", use_container_width=True, key="url_run_btn")
+            process_url = st.button("Generate Summary! ✨ ", use_container_width=True, key="url_run_btn")
         with b_col2:
             if st.button("🗑️ Clear Workspace", use_container_width=True, key="clear_url_action"):
                 st.session_state.headline = None
