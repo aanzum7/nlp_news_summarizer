@@ -524,7 +524,7 @@ def main():
 
     with tab_text:
         st.markdown('<div class="full-width-wrapper">', unsafe_allow_html=True)
-        raw_text = st.text_area("Pro Text Matrix Dropzone Area Block:", key="text_input_box", height=250, placeholder="Paste text copy blocks directly into this zone area...")
+        raw_text = st.text_area("📝 Paste or Drop Content:", key="text_input_box", height=250, placeholder="Paste your text here to generate a 1-minute AI summary...")
         
         min_limit, max_limit = st.slider("Synthesis Prose Word Boundaries:", 40, 300, (75, 90), key="text_slider")
         st.markdown("<br>", unsafe_allow_html=True)
