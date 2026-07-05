@@ -10,7 +10,7 @@ import re
 # ---------------------------
 # ✅ Page Config (Must be First)
 # ---------------------------
-st.set_page_config(page_title="InsightInMinutes | 1Minute AI News Readerr", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="InsightInMinutes | 1Minute AI News Readerr", page_icon="🗞️", layout="wide")
 
 # Initialize Session States
 if "last_summary" not in st.session_state:
@@ -401,7 +401,7 @@ def main():
         # 🏛️ Revamped Brand HUD Layout
         st.markdown("""
         <div class="brand-hud-card">
-            <h2 class="brand-hud-title">🔎 InsightInMinutes</h2>
+            <h2 class="brand-hud-title">🗞️ InsightInMinutes</h2>
             <div class="brand-hud-tag">1Minute  AI News Reader</div>
         </div>
         """, unsafe_allow_html=True)
