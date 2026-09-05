@@ -18,6 +18,19 @@ from modules.rate_limiter import get_rate_limiter
 
 
 # -----------------------------------------------------------------------------
+# Helper: Backward-Compatible Spacer
+# -----------------------------------------------------------------------------
+def add_vertical_space(size: str = "small") -> None:
+    """Safe spacer compatible across all Streamlit versions (including Streamlit Cloud)."""
+    if hasattr(st, "space"):
+        st.space(size)
+    else:
+        height_map = {"small": "12px", "medium": "20px", "large": "30px"}
+        px = height_map.get(size, "12px")
+        st.markdown(f"<div style='margin-top: {px};'></div>", unsafe_allow_html=True)
+
+
+# -----------------------------------------------------------------------------
 # 1. Hero Header Banner
 # -----------------------------------------------------------------------------
 def render_hero() -> None:
@@ -123,7 +136,7 @@ def render_sidebar(api_err: Optional[str]) -> None:
         </div>
         """, unsafe_allow_html=True)
 
-        st.space("small")
+        add_vertical_space("small")
         if st.button("Clear Workspace & Cache", icon=":material/delete_sweep:", use_container_width=True):
             clear_workspace()
             get_cache().clear()
@@ -224,7 +237,7 @@ def render_url_tab(api_key: str) -> None:
             key="active_url_field",
         )
 
-        st.space("small")
+        add_vertical_space("small")
         min_limit, max_limit = st.slider(
             "Synthesis Prose Word Boundaries:",
             min_value=40,
@@ -339,7 +352,7 @@ def render_text_tab(api_key: str) -> None:
             key="raw_text_input",
         )
 
-        st.space("small")
+        add_vertical_space("small")
         t_min, t_max = st.slider(
             "Synthesis Prose Word Boundaries:",
             min_value=40,
@@ -468,7 +481,7 @@ def render_history_tab() -> None:
     with h4:
         st.metric("Tokens Billed", f"{total_tokens:,}", border=True)
 
-    st.space("small")
+    add_vertical_space("small")
     head_col, action_col = st.columns([4, 1])
     with head_col:
         st.markdown(f"##### :material/history: History Timeline ({total_articles} items)")

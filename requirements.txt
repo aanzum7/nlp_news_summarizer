@@ -1,4 +1,4 @@
-﻿altair==5.5.0
+altair==5.5.0
 annotated-types==0.7.0
 attrs==24.2.0
 beautifulsoup4==4.12.3
@@ -53,7 +53,7 @@ rsa==4.9
 six==1.16.0
 smmap==5.0.1
 soupsieve==2.6
-streamlit==1.40.2
+streamlit>=1.40.2
 tenacity==9.0.0
 toml==0.10.2
 tornado==6.4.2
@@ -64,8 +64,8 @@ uritemplate==4.1.1
 urllib3==2.2.3
 watchdog==6.0.0
 google-genai
-streamlit
 requests
 beautifulsoup4
 langdetect
 pandas
+
