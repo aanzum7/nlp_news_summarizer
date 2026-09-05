@@ -1,6 +1,6 @@
 # .gitignore
-.streamlit/secrets.toml
-
-# .gitignore
 config/
 .vscode/ 
+__pycache__/
+*.pyc
+.streamlit/secrets.toml
